@@ -102,7 +102,11 @@
             tours.create();
 
             // If we want to, we can now auto-start a certain tour. E.g. if "&autoStartTour=[tourName]" is in URL
-            if(url.searchParams.get("autoStartTour")!== null) tours.startTour(url.searchParams.get("autoStartTour"));
+            if(url.searchParams.get("autoStartTour")!== null) {
+                var tourToStart = url.searchParams.get("autoStartTour");
+                if(tourToStart === "") tourToStart = "default tour";
+                tours.startTour(tourToStart);
+            }
            
         </script>
 	</body>

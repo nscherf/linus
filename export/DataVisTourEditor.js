@@ -8,7 +8,7 @@ function DataVisTourEditor(datavis, gui)
     this.camera = datavis.camera;
     this.tourCreatorCheckedSettings = {};
     this.tourChangeCounter = 0;
-
+    
     /**
      * Creates the tour URL and displays it in the respective box
      */
@@ -100,6 +100,17 @@ function DataVisTourEditor(datavis, gui)
         qrLink.innerHTML = "QR Code";
         qrLink.onclick = this.prepareTourQR.bind(this)
 
+        var autoStartHolder = document.createElement("span")
+        var autoStartHeadline = document.createElement("span")
+        autoStartHeadline.innerHTML = "Auto start on call?"
+        autoStartHeadline.style.marginLeft = "20px";
+        var autoStartCheckbox = document.createElement("input")
+        autoStartCheckbox.setAttribute("type", "checkbox")
+        autoStartCheckbox.setAttribute("id", "autoStartCheckbox")
+        autoStartCheckbox.setAttribute("checked", "checked")
+        autoStartHolder.appendChild(autoStartHeadline)
+        autoStartHolder.appendChild(autoStartCheckbox)
+
         father.appendChild(buttonSetting)
         father.appendChild(buttonCamera)    
         father.appendChild(buttonMarker) 
@@ -107,6 +118,7 @@ function DataVisTourEditor(datavis, gui)
         father.appendChild(list)
         father.appendChild(resultBox)
         father.appendChild(qrLink)
+        father.appendChild(autoStartHolder)
         document.body.appendChild(father)
     }
 
@@ -166,6 +178,9 @@ function DataVisTourEditor(datavis, gui)
         url.searchParams.delete("editor");
         url.searchParams.delete("tour");
         url.searchParams.append("tour", source)
+        if(document.getElementById("autoStartCheckbox").checked) {
+            url.searchParams.append("autoStartTour", "")
+        }
         return url.toString();
     }
 

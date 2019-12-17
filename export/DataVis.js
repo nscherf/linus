@@ -890,13 +890,7 @@ function DataVis(gui) {
             </div>`;
         this.initGl();
 
-        this.gui.create();
-
-        
-
         this.initGui();
-
-        
     
         this.div = document.getElementById('selectionBox');
         this.makeAllElementsVisible()
@@ -1019,7 +1013,8 @@ function DataVis(gui) {
     // the geometry type.
     this.initGl = function() 
     {
-        this.renderer = new THREE.WebGLRenderer({antialias: this.aa, alpha: true, stencil: false });
+        this.renderer = new THREE.WebGLRenderer({antialias: this.aa,
+             alpha: true, stencil: false, preserveDrawingBuffer: true });
         this.renderer.setPixelRatio(window.devicePixelRatio);
         this.renderer.setClearColor(0x000000, 0.0);
         this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -1491,6 +1486,8 @@ function DataVis(gui) {
     // TODO: clean up the mess with parameters p, p2, p, ...
     this.initGui = function() 
     {
+        this.gui.create();
+
         this.gui.addMainHeadline("General settings")
         this.gui.addSelection("Gui scale", ["Small", "Medium", "Large"], 1, function(val) {this.scale((val == 0 ? 250 : (val == 1 ? 400 : 600)))}.bind(this), false)
 
@@ -1764,10 +1761,19 @@ function DataVis(gui) {
 
         // Default elements for gui
         this.gui.addMainHeadline("Tours and Data Export");
+        var screenshotLinkHolder = document.createElement("div");
+        screenshotLinkHolder.setAttribute("id", "screenshotLinkHolder");
+        var screenshotLink = document.createElement("a");
+        screenshotLink.innerHTML = "&bull; Screenshot";
+        screenshotLink.href = "#"; 
+        screenshotLink.onclick = this.screenshot.bind(this);
+        this.gui.addChild(screenshotLink);
+
+
         var exportLinkHolder = document.createElement("div");
         exportLinkHolder.setAttribute("id", "exportLinkHolder");
         var exportLink = document.createElement("a");
-        exportLink.setAttribute("id", "exportLinkHolder");
+        //exportLink.setAttribute("id", "exportLinkHolder");
         exportLink.innerHTML = "&bull; Download selection";
         exportLink.href = "#"; 
         exportLink.onclick = this.exportSelection.bind(this);
@@ -2202,6 +2208,16 @@ function DataVis(gui) {
         this.downloadText("export.json", JSON.stringify(exportData, null, 1));
     },
 
+    this.screenshot = function() {
+        //var dataURL = this.canvas.toDataURL('image/png');
+        this.renderer.domElement.toBlob(function(blob){
+            date = new Date();
+            var dateString = date.getFullYear() + "-" + (1+date.getMonth()) + "-" + date.getDate() + ", " +
+                date.getHours() + "-" + ("00" + date.getMinutes()).slice(-2) + "-" + date.getSeconds()
+            saveAs(blob, 'screenshot ' + dateString + '.png');
+        }, 'image/png');
+    }
+
     // TODO: find a reasonable/acceptable way to download or display the text representing the filtered data
     this.downloadText = function(filename, text) 
     {
@@ -2210,29 +2226,6 @@ function DataVis(gui) {
         });
         saveAs(blob);
 
-        return;
-        var zip = new JSZip();
-        console.log(zip);
-        zip.file("data.json", text);
-        zip.generateAsync({ type: 'blob', compression: "STORE" }, function updateCallback(metadata) {
-            console.log("progression: " + metadata.percent.toFixed(2) + " %");
-            if(metadata.currentFile) {
-                console.log("current file = " + metadata.currentFile);
-            }
-        }).then(function(blob) {
-            console.log("...prepare for download")
-            saveAs(blob, 'data.zip');
-        });
-        return;
-
-        // The following code does not work in chrome, since too heavy data
-        var element = document.createElement('a');
-        var t = document.createTextNode("Download selection");
-        element.appendChild(t);
-        element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-        element.setAttribute('download', filename);
-      
-        document.getElementById("exportLinkHolder").appendChild(element);
     },
 
     this.setCamera = function(v)

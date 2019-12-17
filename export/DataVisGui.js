@@ -22,6 +22,7 @@ function DataVisGUI()
      */
     this.hide = function() {
         document.getElementById("guiArea").classList.add("hideMe");
+        document.getElementById("guiAreaToggle").classList.add("hideMe");
     }
 
     /**
@@ -30,6 +31,7 @@ function DataVisGUI()
     this.unhide = function()
     {
         document.getElementById("guiArea").classList.remove("hideMe");
+        document.getElementById("guiAreaToggle").classList.remove("hideMe");
     }
 
     /**

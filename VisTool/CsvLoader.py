@@ -9,7 +9,7 @@ class CsvLoader:
         - a numpy array for attributes, [n_tracks, n_pos_per_track, n_attributes]
         - a list of attribute names, derived from the header or automatically [att0, att1,...] """
 
-    def __init__(self, folderWithCSVs, firstLineIsHeader=True, csvSeparator=",", resampleTo=0, dim=3):
+    def __init__(self, folderWithCSVs, resampleTo=50, firstLineIsHeader=True, csvSeparator=",", dim=3):
         self.folder = folderWithCSVs + "/"  # Better a slash too much...
         self.filenameList = []
         self.headerList = []
