@@ -24,6 +24,7 @@ parser.add_argument("--zip", help="Zip the result and wrap it to base64", action
 parser.add_argument("--skipSmallerThan", help="Skips tracks that are smaller than n points (default: 2)", action='store', default=2)
 parser.add_argument("--resampleTo", help="Target track length (after resampling) (default: 50)", action='store', default=50)
 parser.add_argument("--csvNoHeader", help="By default, the first line is assumed to be a header. If table is full of numeric values, use this option.", action='store_true', default=None)
+parser.add_argument("--csvSep", help="Add the CSV separator you are using (default: ,)", action='store_true', default=",")
 
 print("Prepare your trajectory data for a WebGL-based interactive visualization.")
 print("Please provide at least one data source. Find the result in ./export/")
@@ -47,6 +48,7 @@ useZip = args.zip
 csvNoHeader = args.csvNoHeader
 skipSmallerThan = int(args.skipSmallerThan)
 resampleTo = int(args.resampleTo)
+csvSep = args.csvSep
 
 
 # Case 1: Use the command line interface
@@ -54,7 +56,7 @@ loadFromCmd = tgmmPath != None or csvPath != None or biotracksPath != None or sv
 if loadFromCmd:
     if csvPath is not None:
         print("Load from CSV...")
-        loader = vt.CsvLoader(csvPath, resampleTo=resampleTo, minTrackLength=skipSmallerThan, firstLineIsHeader=(csvNoHeader is None))
+        loader = vt.CsvLoader(csvPath, resampleTo=resampleTo, minTrackLength=skipSmallerThan, firstLineIsHeader=(csvNoHeader is None), csvSeparator=csvSep)
     if tgmmPath is not None:
         print("Load from TGMM...")
         loader = vt.TgmmLoader(tgmmPath, resampleTo=resampleTo, minTrackLength=skipSmallerThan,)
@@ -63,7 +65,7 @@ if loadFromCmd:
         loader = vt.BiotracksLoader(biotracksPath, resampleTo=resampleTo, minTrackLength=skipSmallerThan,)
     if svfPath is not None:
         print("Load from SVF...")
-        loader = vt.SvfLoader(svfPath, resampleTo=resampleTo, minTrackLength=skipSmallerThan)
+        loader = vt.SvfLoader(svfPath, resampleTo=resampleTo, minTrackLength=skipSmallerThan, csvSeparator=csvSep)
     tracks, attributes, names = loader.get()
 
     # Start the track modifier that adjusts the data or adds attributes

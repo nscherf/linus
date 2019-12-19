@@ -1,18 +1,58 @@
 # WebGL interactive figure
 
-This tool aims to be a simple option for scientists to visualize their trajectory datasets. The tool consists of two parts. First, an offline Python script performs preprocessing of tracks and creates a custom JavaScript data file. The second part runs in the browser and renders the tracks in 3D.
+This tool aims to be a simple option for scientists to visualize their trajectory datasets. The tool consists of two parts. First, an offline Python script performs preprocessing of tracks and creates a custom JSON. The second part runs in the browser and renders the tracks in 3D.
 
 The tool automatically provides multiple controls, rendering options and filter methods, which enables advanced data exploration. Alternatively, you can take the user by the hand and present pre-defined tours. The tool runs without installation - it can be executed in all modern browsers, even in virtual reality goggles. 
 
 ## Data processing
-This section explains the first step: converting your data, add custom data attributes, provide visual context. You start by importing the library and create a new object that handles the data preparation:
+This section explains the first step: converting your data, add custom data attributes, provide visual context. You need python3 with numpy and scipy. Edge bundling requires pyopencl.
+
+You can either build your dataset programmatically or use the command line interface. The most basic usage is to call the script and deliver a trajectory data source:
 
 ```python
-import EdgeBundler as eb
-builder = eb.WebGlToolBuilder()
+python3 run.py -csv ./mydata/
 ```
+This creates the visualization from a folder of CSV files. All import options are:
+- ```-tgmm```, path of a folder of TGMM files
+- ```-biotracks```, path to a JSON file describing data in biotracks layout
+- ```-svf```, path to a CSV file in svf layout. Define the separator to be used in the CSV files with ```--csvSep```.
+- ```-csv```, path to a folder of CSV files, where each file contains at least three columns for x/y/z and (optionally) additional columns for attributes. Note, if the CSVs are without header line, also add the parameter ```--csvNoHeader```. Define the separator to be used in the CSV files with ```--csvSep```.
 
-Now you can add one or multiple data sets. Due to technical limitations, multiple data sets are rendered one after the other. This leads to visual artifacts, since a second data set is always painted _on top_ of the first data set! Anyway, the purpose of having multiple datasets is to allow visual context. For example you can add context geometry (e.g. triangles) _at first_ and afterwards add the data of interest. Correct rendering (without artifacts) happens only _within_ a data set.
+All trajectories must be resampled to the same number of positions. By default, all lines are resampled to 40 points. You can change this by defining it with parameter ```--resampleTo```. Besides that, you can filter out small trajectories with ```--skipSmallerThan```. Move your data to the center (set barycenter to 0/0/0) or scale it to a maximum width of 1 by using the commands ```--moveToCenter``` and ```--scaleToUnit```.
+
+To enrich your visualization you can let the tool calculate the following information:
+- ```--addRadius```, adds an attribute containing the distance between 0/0/0 (after the moveToCenter-operation was performed) and each position
+- ```--addAngle```, adds an attribute containing the angle between line start and current location (in cartesian coordinates)
+- ```--addTime```, a "counter" of the current line position (0 for the first point, 1 for the second point, ...)
+- ```--addBundled```, performs edge bundling to improve clarity of dense line data. Works best for non-crossing trajectories. Requires PyOpenCL and a decent graphics card.
+
+We offer the additional rendering of a background silhouette that can be provided by either STL oder OBJ data (triangles). For this, add the following parameter:
+- ```--stl```, plus the path to the file
+- ```--obj```, plus the path to the file
+
+The result will be exported to the folder ./export, which holds the index.html that can be opened in any modern browser. Performance seems to be best in Chrome-based browsers. Note, to reduce the data size you can zip the result with the parameter ```--zip```, which creates a base64-encoded zipped version instead of a native JSON file.
+
+### Individual setup in python
+As an alternative to the command line interface, you can create your visualization in python. First you should understand the data organization. The idea is to have a dataset containing at least a number of tracks, where each track consists of a number of positions. For simplicity, we resize all tracks while loading to have the same number of positions. In theory, our tool allows the data to have multiple states. Another state could be a projected version of the data, or for example the edge-bundled version. Additional states must have exactly the same layout like the original data (same number of tracks, same order, same number of positions). Later you will be able to fade dynamically between the states. Furthermore, the data can be enriched with attributes. These could be signals (measurements) or any other numeric values. Later you will be able to colorize or filter the data based on these attributes. 
+
+Our tool offers several class that help you to create the visualization:
+
+
+#### Loader classes
+Use one of the loaders to load the trajectory data. Here you should define the resampling rate, the minimum track size, and individual parameters depending on the concrete loader class (e.g. CSV separator). The results are
+- tracks
+- attributes
+- attribute names
+
+#### Track modifier
+The track modifier is a class to alter the loaded data. This includes adding new attributes and new states, or to translate/scale the data.
+
+#### Triangle loader
+A tool to load the triangle data. Note, if you have resized the trajectories, you should resize the triangles in the same way (otherwise they'll have different scale).
+
+#### Builder
+The WebGlToolBuilder is the tool that collects all information and creates a single JSON file from it. In this class you can add multiple datasets. However, multiple datasets are always rendered _after_ each other, hence they cannot partially overlap.
+
 
 ### Trajectory data
 Trajectory input data is expected as a folder of CSV files. Each file contains a single track and each line of a CSV file represents a position. If the first line contains a header (e.g.~the names of the columns), set the parameter `firstLineIsHeader` to `True`. The values  within one line should be separated by commas (alternatively you can define your own separator with the property `csvSeparator`). Each csv file must contain at least three columns representing the x, y, z coordinates. Additional custom columns may contain numeric values representing data attributes (e.g. a measured signal or the time point of the respective position), but it is important that all tracks have the _same number_ of additional attributes. __Note: WebGL only allows a limited number of data attributes. Five custom attributes should not be a problem, but check the explanations below for details.__
