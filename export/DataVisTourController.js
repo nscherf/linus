@@ -33,6 +33,14 @@ function DataVisTourController(datavis, gui)
      */
     this.create = function()
     {
+        var editorLinkHolder = document.createElement("div");
+        editorLinkHolder.setAttribute("id", "editorLinkHolder");
+        var editorLink = document.createElement("a");
+        editorLink.innerHTML = "&bull; Open tour editor";
+        editorLink.href = "#"; 
+        editorLink.onclick = this.showTourEditor.bind(this);
+        this.gui.addChild(editorLink);
+        
         gui.addFloat("Tour speed", -10, 10, 0, function(val) {this.setTourSpeed(val)}.bind(this), false)
         var tourList = document.createElement("div");
         tourList.setAttribute("id", "tourList");
@@ -41,8 +49,8 @@ function DataVisTourController(datavis, gui)
             console.log("Add tour", id)
             var tourLink = document.createElement("a");
             var p = {context: this, id: id};
-            tourLink.onclick = function() {this.context.startTour(this.id, false);}.bind(p);
-            tourLink.innerHTML = "Start tour "+id;
+            tourLink.onclick = function() {this.context.startOrLoadTour(this.id, false);}.bind(p);
+            tourLink.innerHTML = "&bull;  tour "+id;
             tourLink.href = "#";
             tourList.appendChild(tourLink);
         }
@@ -55,6 +63,9 @@ function DataVisTourController(datavis, gui)
      */
     this.showTourEditor = function() 
     {
+        if(this.isShowingEditor)
+            return;
+
         this.isShowingEditor = true;
         this.tourEditor.create();
     }
@@ -113,6 +124,18 @@ function DataVisTourController(datavis, gui)
     {
         setTimeout(function() {this.gui.unhide()}.bind(this), this.timer);
     }
+
+    /**
+     * Starts the tour or opens it in editor, depending on the fact
+     * whether editor is open or not
+     */
+    this.startOrLoadTour = function(name, repeat = true)
+    {
+        if(this.isShowingEditor)
+            this.tourEditor.loadTour(this.tours[name])
+        else 
+            this.startTour(name, repeat)
+    },
     
     /**
      * Opens a tour from the internal tour list. The tour is compiled
@@ -126,7 +149,7 @@ function DataVisTourController(datavis, gui)
      */
     this.startTour = function(name, repeat = true) 
     {
-        console.log("Start tour", name);
+        console.log("Tour", name);
         var tourString = this.tours[name];
         this.resetTourTimer();
         this.gui.hide();
