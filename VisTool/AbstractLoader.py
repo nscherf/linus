@@ -16,7 +16,7 @@ class AbstractLoader:
         self.dim = 3
         self.minTrackLength = minTrackLength
 
-    def trackListToNumpy(self):
+    def convertTrackListToMatrix(self):
         """ Converts the internal list (dictionary trackId -> track, where
             each track is an array of [x, y, z, a1, a2, ...]) to
             a numpy array and resizes them to self.resampleTo.

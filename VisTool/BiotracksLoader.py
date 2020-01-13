@@ -27,7 +27,7 @@ class BiotracksLoader(AbstractLoader):
 
         self.analyzeJson(jsonPath)
         self.createFullTracks()
-        self.trackListToNumpy()
+        self.convertTrackListToMatrix()
 
     def createFullTracks(self):
         """ Loads all objects (and their unique ID), loads the links (which

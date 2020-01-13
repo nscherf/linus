@@ -11,7 +11,7 @@ class SvfLoader(AbstractLoader):
         super(SvfLoader, self).__init__(resampleTo, minTrackLength)
         self.csvSeparator = csvSeparator
         self.loadSvf(svfPath)
-        self.trackListToNumpy()
+        self.convertTrackListToMatrix()
         return
 
     def loadSvf(self, path):

@@ -16,7 +16,7 @@ class CsvLoader(AbstractLoader):
         self.csvSeparator = csvSeparator
         self.firstLineIsHeader = firstLineIsHeader
         self.loadCsvs(folderWithCSVs)
-        self.trackListToNumpy()
+        self.convertTrackListToMatrix()
 
     def loadCsvs(self, folder):
         """ Calls the loading-function for each csv file """

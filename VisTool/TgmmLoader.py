@@ -11,7 +11,7 @@ class TgmmLoader(AbstractLoader):
     def __init__(self, folderWithXMLs, resampleTo=50, minTrackLength=2,dim=3):
         super(TgmmLoader, self).__init__(resampleTo, minTrackLength)
         self.loadXMLs(folderWithXMLs)
-        self.trackListToNumpy()
+        self.convertTrackListToMatrix()
 
     def loadXMLs(self, folder):
         self.trackList = {}
