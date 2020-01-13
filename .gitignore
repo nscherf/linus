@@ -1,0 +1,7 @@
+VisTool/__pycache__/
+__pycache__/
+export/.htaccess
+export/.htpasswd
+export/_versions/
+export/data/
+testcases/
