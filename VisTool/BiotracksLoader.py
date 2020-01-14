@@ -3,6 +3,7 @@ import numpy as np
 from scipy.ndimage import zoom
 import json
 import csv
+import sys
 
 from .AbstractLoader import AbstractLoader
 
@@ -16,18 +17,25 @@ class BiotracksLoader(AbstractLoader):
     def __init__(self, jsonPath, resampleTo=50, minTrackLength=2, dim=3):
         super(BiotracksLoader, self).__init__(resampleTo, minTrackLength)
         self.dim = dim
-        self.jsonPath = jsonPath + "/"  # Better a slash too much...
+        self.jsonPath = jsonPath # Better a slash too much...
+        self.folder = os.path.dirname(jsonPath)
         self.trackPath = "tracks.csv"
+        self.initDataStructure()
+        self.analyzeSettingFile(jsonPath)
+        self.createFullTracks()
+        self.convertTrackListToMatrix()
+
+    def initDataStructure(self):
         self.linkPaths = []
         self.linkKeys = []
         self.linkNames = []
         self.objectPaths = {}
         self.objectKeys = {}
         self.objectColumns = {}
-
-        self.analyzeJson(jsonPath)
-        self.createFullTracks()
-        self.convertTrackListToMatrix()
+        self.linkCollection = {}
+        self.attributeNames.append("Frame")
+        self.objects = {}
+        self.links = {}
 
     def createFullTracks(self):
         """ Loads all objects (and their unique ID), loads the links (which
@@ -35,25 +43,26 @@ class BiotracksLoader(AbstractLoader):
             of link IDs) and resolves the information to a single list 
             of tracks
         """
-        # We assume that links/objects have unique ID over all files
-        self.linkCollection = {}
-        self.attributeNames.append("Frame")
-        objects = {}
-        links = {}
+        self.checkLinkFiles()
+        self.buildTracks()
 
+    def checkLinkFiles(self):
         # We check all files containing links
         for i in range(len(self.linkPaths)):
-            # The column names.
-            objectListName = self.linkKeys[i]["objectListName"]
-            objectColumnName = self.linkKeys[i]["objectColumnName"]
-            # TODO: is it correct to assume this constant strings?
-            objectColumnTime = "cmso_frame_id"
-            objectColumnX = "cmso_x_coord"
-            objectColumnY = "cmso_y_coord"
-            objectColumnZ = "cmso_z_coord"
-            #print("Handle object list", objectListName, "with key", objectColumnName)
+            self.checkLinkFile(i)
+            
+    def checkLinkFile(self, i):
+        # The column names.
+        objectListName = self.linkKeys[i]["objectListName"]
+        objectColumnName = self.linkKeys[i]["objectColumnName"]
+        # TODO: is it correct to assume this constant strings?
+        objectColumnTime = "cmso_frame_id"
+        objectColumnX = "cmso_x_coord"
+        objectColumnY = "cmso_y_coord"
+        objectColumnZ = "cmso_z_coord"
 
-            # Open objects and store x, y, z, t
+        # Open objects and store x, y, z, t
+        try:
             with open(self.objectPaths[objectListName]) as objectFile:
                 objectReader = csv.DictReader(objectFile, delimiter=',')
                 for row in objectReader:
@@ -63,49 +72,66 @@ class BiotracksLoader(AbstractLoader):
                     else:
                         c.append(0)
                     c.append(row[objectColumnTime])
-                    objects[row[objectColumnName]] = c
+                    self.objects[row[objectColumnName]] = c
+        except IOError:
+            self.stopBecauseMissingFile(self.objectPaths[objectListName], "object file")
 
-            # Get list of links
+        # Get list of links
+        try:
             with open(self.linkPaths[i]) as linkFile:
                 linkReader = csv.reader(linkFile, delimiter=',')
                 next(linkReader, None)  # skip header
                 for row in linkReader:
-                    if not row[0] in links:
-                        links[row[0]] = []
-                    links[row[0]].append(row[1])
+                    if not row[0] in self.links:
+                        self.links[row[0]] = []
+                    self.links[row[0]].append(row[1])
+        except IOError:
+            self.stopBecauseMissingFile(self.linkPaths[i], "link file")
 
-        # Build the tracks
-        with open(self.trackPath) as trackFile:
-            trackReader = csv.reader(trackFile, delimiter=',')
-            next(trackReader, None)  # skip header
+    def buildTracks(self):
+        try:
+            with open(self.trackPath) as trackFile:
+                trackReader = csv.reader(trackFile, delimiter=',')
+                next(trackReader, None)  # skip header
 
-            for row in trackReader:
-                if not row[0] in self.trackList:
-                    self.trackList[row[0]] = []
-                for p in links[row[1]]:
-                    self.trackList[row[0]].append(objects[p])
+                for row in trackReader:
+                    if not row[0] in self.trackList:
+                        self.trackList[row[0]] = []
+                    for p in self.links[row[1]]:
+                        self.trackList[row[0]].append(self.objects[p])
+        except IOError:
+            self.stopBecauseMissingFile(self.trackPath, "track file")
 
-    def analyzeJson(self, path):
-        folder = os.path.dirname(path)
-        self.trackPath = folder + "/tracks.csv"
-        with open(path) as json_file:
-            data = json.load(json_file)
-            for r in range(len(data["resources"])):
-                if "primaryKey" in data["resources"][r]["schema"]:
-                    objId = data["resources"][r]["name"]
-                    self.objectPaths[objId] = folder + \
-                        "/" + data["resources"][r]["path"]
-                    self.objectKeys[objId] = data["resources"][r]["schema"]["primaryKey"]
-                    self.objectColumns[objId] = [x["name"]
-                                                 for x in data["resources"][r]["schema"]["fields"]]
-                    #print("Found an object table. Update:", self.objectPaths, self.objectKeys, self.objectColumns)
-                if "foreignKeys" in data["resources"][r]["schema"]:
-                    keys = {}
-                    for i in range(len(data["resources"][r]["schema"]["foreignKeys"])):
-                        keys["objectListName"] = data["resources"][r]["schema"]["foreignKeys"][i]["reference"]["resource"]
-                        keys["objectColumnName"] = data["resources"][r]["schema"]["foreignKeys"][i]["reference"]["fields"]
-                    self.linkKeys.append(keys)
-                    self.linkPaths.append(
-                        folder + "/" + data["resources"][r]["path"])
-                    self.linkNames.append(data["resources"][r]["name"])
-                    #print("Found link table", self.linkPaths, self.linkKeys, self.linkNames)
+    def analyzeSettingFile(self, path):
+        self.trackPath = self.folder + "/tracks.csv"
+        try:
+            with open(path) as json_file:
+                data = json.load(json_file)
+                self.analyzeJSON(data)
+        except IOError:
+            self.stopBecauseMissingFile(path, "json file")
+
+    def analyzeJSON(self, data):
+        for r in range(len(data["resources"])):
+            if "primaryKey" in data["resources"][r]["schema"]:
+                self.analyzePrimary(data["resources"][r])
+            if "foreignKeys" in data["resources"][r]["schema"]:
+                self.analyzeForeign(data["resources"][r])
+
+    def analyzePrimary(self, data):
+        objId = data["name"]
+        self.objectPaths[objId] = self.folder + "/" + data["path"]
+        self.objectKeys[objId] = data["schema"]["primaryKey"]
+        self.objectColumns[objId] = [x["name"] for x in data["schema"]["fields"]]    
+
+    def analyzeForeign(self, data):
+        keys = {}
+        for i in range(len(data["schema"]["foreignKeys"])):
+            keys["objectListName"] = data["schema"]["foreignKeys"][i]["reference"]["resource"]
+            keys["objectColumnName"] = data["schema"]["foreignKeys"][i]["reference"]["fields"]
+        self.linkKeys.append(keys)
+        self.linkPaths.append(self.folder + "/" + data["path"])
+        self.linkNames.append(data["name"])
+        
+
+

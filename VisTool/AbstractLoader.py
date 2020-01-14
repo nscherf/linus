@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 from scipy.ndimage import zoom
 
 
@@ -93,3 +94,10 @@ class AbstractLoader:
         """ get the three lists: tracks, attribute (values), attribute names 
         """
         return self.tracksMatrix, self.attributesMatrix, self.attributeNames
+
+    def stopBecauseMissingFile(self, filename, description):
+        self.stopBecauseError("Could not open " + description + ": " + filename)
+
+    def stopBecauseError(self, description):
+        print("\nError!", description)
+        sys.exit()

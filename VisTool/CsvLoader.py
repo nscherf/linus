@@ -23,25 +23,35 @@ class CsvLoader(AbstractLoader):
         counter = 0
         for filename in sorted(os.listdir(folder)):
             if filename.endswith(".csv"):
-                with open(folder + "/" + filename) as f:
-                    self.trackList[counter] = []
-                    self.simpleStatusPrint(counter, 50)
-                    objectReader = csv.reader(
-                        f, delimiter=self.csvSeparator, skipinitialspace=True)
-                    if counter == 0:
-                        # If this is the first track, get attribute information
-                        row = next(objectReader)
-                        if self.firstLineIsHeader:
-                            for i in range(self.dim, len(row)):
-                                self.attributeNames.append(row[i])
-                        else:
-                            f.seek(0)
-                            for i in range(self.dim, len(row)):
-                                self.attributeNames.append(
-                                    "Attrib" + str(i - self.dim))
-                        print(self.attributeNames)
-
-                    for row in objectReader:
-                        self.trackList[counter].append([float(x) for x in row])
-                    counter += 1
+                if counter == 0:
+                    self.analyzeHeader(folder + "/" + filename)
+                self.handleCsv(folder + "/" + filename, counter)
+                counter += 1
         print()
+
+    def analyzeHeader(self, filename):
+        try:
+            with open(filename) as f:
+                objectReader = csv.reader(f, delimiter=self.csvSeparator, skipinitialspace=True)
+                row = next(objectReader)
+                for i in range(self.dim, len(row)):
+                    if self.firstLineIsHeader:
+                        self.attributeNames.append(row[i])
+                    else:
+                        self.attributeNames.append("Attrib" + str(i - self.dim))
+        except IOError:
+            self.stopBecauseMissingFile(filename, "csv file")
+
+    def handleCsv(self, filename, counter):
+        try:
+            with open(filename) as f:
+                self.trackList[counter] = []
+                self.simpleStatusPrint(counter, 50)
+                objectReader = csv.reader(f, delimiter=self.csvSeparator, skipinitialspace=True)
+                # skip first line if it's a header
+                if self.firstLineIsHeader:
+                    row = next(objectReader)
+                for row in objectReader:
+                    self.trackList[counter].append([float(x) for x in row])
+        except IOError:
+            self.stopBecauseMissingFile(filename, "csv file")
