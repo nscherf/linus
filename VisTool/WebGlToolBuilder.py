@@ -104,21 +104,30 @@ class WebGlToolBuilder:
 
     def writeJson(self, path, zipped):
         """ Outputs the data, and optionally zips it """
-        print("Convert data to JSON")
+        print("Prepare data export")
         data = json.dumps(self.data)
+        data = self.reduceAccuracy(data)
 
+        if zipped:
+            print("Create zipped version")
+            data = self.zipData(data)
+
+        try:
+            with open(path, 'w') as outfile:
+                outfile.write("var data = " + data)
+        except IOError:
+            print("Error! Could not create output file", path)
+
+    def reduceAccuracy(self, data):
         # Replace long digits by regex accepting only n digits
         decimal = ""
         for i in range(self.accuracy):
             decimal += "[0-9]"
         print("Reduce accuracy to", self.accuracy, "digits")
         data = re.sub('\s(-?[0-9]+\.'+decimal+')([0-9]*)', r'\1', data)
+        return data
 
-        if zipped:
-            print("Create zipped version")
-            data = zlib.compress(str.encode(data))
-            data = "\""+base64.b64encode(data).decode()+"\""
-
-        with open(path, 'w') as outfile:
-            outfile.write("var data = " + data)
-        print("Done with export")
+    def zipData(self, data):
+        data = zlib.compress(str.encode(data))
+        data = "\""+base64.b64encode(data).decode()+"\""
+        return data
