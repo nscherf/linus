@@ -19,18 +19,35 @@ class EdgeBundler:
 
     def __init__(self, tracks):
         """ Inits parameters with default values. Most of them will be overwritten automatically """
-        startTime = time.time()
+        self.initTrackRelatedData(tracks)
+        self.initOclParameters()
+        self.initBundlingParameters()
+
+    def initTrackRelatedData(self, tracks):        
         self.min = [sys.maxsize, sys.maxsize, sys.maxsize]
         self.max = [-sys.maxsize, -sys.maxsize, -sys.maxsize]
         self.tracksNp = tracks
         self.tracksBundledNp = np.zeros_like(tracks)
         self.trackLength = self.tracksNp.shape[1]
-        self.min = [self.tracksNp[:, :, 0].min(
-        ), self.tracksNp[:, :, 1].min(), self.tracksNp[:, :, 2].min()]
-        self.max = [self.tracksNp[:, :, 0].max(
-        ), self.tracksNp[:, :, 1].max(), self.tracksNp[:, :, 2].max()]
+        self.min = [self.tracksNp[:, :, 0].min(), self.tracksNp[:, :, 1].min(), self.tracksNp[:, :, 2].min()]
+        self.max = [self.tracksNp[:, :, 0].max(), self.tracksNp[:, :, 1].max(), self.tracksNp[:, :, 2].max()]
 
-        # OpenCl-Parameters, will contain typed arrays later on
+    def initBundlingParameters(self):
+        self.magnetRadius = 0
+        self.stepsize = 0
+        self.angleMin = 0
+        self.angleStick = 0
+        self.offset = 0
+        self.bundleEndPoints = 0
+        self.dimension = 3  # default is 3D data
+        self.numClusters = 5
+        self.quickBundleLength = 8
+        self.quickBundleIterations = 20
+        self.bundlingIterations = 15
+        self.chunkSize = 10000  # number of calculations per CL-call
+        self.scale = 1.
+
+    def initOclParameters(self):
         self.oclFiberStarts = np.empty(0, dtype=TYPEI)
         self.oclFiberLengths = np.empty(0, dtype=TYPEI)
         self.oclClusterStarts = np.empty(0, dtype=TYPEI)
@@ -39,22 +56,7 @@ class EdgeBundler:
         self.oclClusterInverse = np.empty(0, dtype=TYPEI)
         self.oclPoints = np.empty(0, dtype=TYPEF)
         self.oclPointsResult = np.empty(0, dtype=TYPEF)
-        self.magnetRadius = 0
-        self.stepsize = 0
-        self.angleMin = 0
-        self.angleStick = 0
-        self.offset = 0
-        self.bundleEndPoints = 0
 
-        # To be set up by user. However, some of them might be overwritten later automatically
-        # with the purpose to provide a nice default value.
-        self.dimension = 3  # default is 3D data
-        self.numClusters = 5
-        self.quickBundleLength = 8
-        self.quickBundleIterations = 20
-        self.bundlingIterations = 15
-        self.chunkSize = 10000  # number of calculations per CL-call
-        self.scale = 1.
 
     def setMagnetRadius(self, val):
         """ Setter for the radius in which magnetic forces should apply. High values
@@ -85,8 +87,25 @@ class EdgeBundler:
             print("("+str(i)+")")
 
     def estimateDefaultValues(self):
-        """ Set some of the parameters depending on data size. """
-        # Some - for now - fixed values:
+        """ Set some of the parameters depending on data size. 
+            A number of them are just fixed values. Others are 
+            derived from data size/dimension
+        """
+        self.setConstantDefaultValues()
+        self.min = [x for x in self.min]
+        self.max = [x for x in self.max]
+        diagonal = math.sqrt(sum([(x[0]-x[1])**2 for x in zip(self.max, self.min)]))
+        self.magnetRadius = diagonal * 0.02
+        self.numClusters = math.ceil(len(self.tracksNp) / 100)
+        self.printParameters()
+
+    def printParameters(self):
+        print("Overview of automatically derived parameters:")
+        print("Min and max are at", self.min, self.max)
+        print("We choose 2% of the data's bounding box' diagonal as bundling radius:", self.magnetRadius)
+        print("Number of tracks is", len(self.tracksNp), ", so we choose", self.numClusters, "as number of clusters")
+
+    def setConstantDefaultValues(self):
         self.stepsize = .5
         self.angleMin = 0.
         self.angleStick = 0.0
@@ -94,65 +113,39 @@ class EdgeBundler:
         self.smoothRadius = 1.
         self.smoothIntensity = 0.5  # TODO. 0.5
 
-        self.min = [x for x in self.min]
-        self.max = [x for x in self.max]
-
-        diagonal = math.sqrt(
-            sum([(x[0]-x[1])**2 for x in zip(self.max, self.min)]))
-        self.magnetRadius = diagonal * 0.02
-        # if self.oclMagnetRadius > 9: self.oclMagnetRadius = int(self.oclMagnetRadius) # pure cosmetics
-        self.numClusters = math.ceil(len(self.tracksNp) / 100)
-
-        print("Overview of automatically derived parameters:")
-        #print("Min and max are at", self.min, self.max)
-        print("Diagonal of data space is", diagonal,
-              ". We choose 2% of that as bundling radius:", self.magnetRadius)
-        print("Number of tracks is", len(self.tracksNp),
-              ", hence we chose", self.numClusters, "as number of clusters")
-
     def prepareOpenClData(self, cl):
         """ Prepare the data (tracks, clusters) by copying into OpenCl-readable layout """
         # We first care about tracks and what points belong to them
-        self.oclFiberStarts = np.array(
-            [self.trackLength * x for x in range(len(self.tracksNp))], dtype=TYPEI)
-        self.oclFiberLengths = np.array(
-            [self.trackLength for x in range(len(self.tracksNp))], dtype=TYPEI)
+        self.oclFiberStarts = np.array([self.trackLength * x for x in range(len(self.tracksNp))], dtype=TYPEI)
+        self.oclFiberLengths = np.array([self.trackLength for x in range(len(self.tracksNp))], dtype=TYPEI)
         cl.oclPoints = self.trackNpToNpOpenCl4D(self.tracksNp)
         pointCounter = len(self.tracksNp) * self.trackLength
 
-        # The result array is just the same like the input. Since the result might only
-        # fill some positions, we have to initialize the result with the original points.
+        # The result array is just the same like the input. Since the result might only fill some 
+        # (sparse) positions, we have to initialize the result with all the original points.
         cl.oclPointsResult = copy.deepcopy(cl.oclPoints)
 
         # Now we store clusters and their relation to the tracks
         self.oclClusterIndices = np.empty(0, dtype=TYPEI)
-        self.oclClusterInverse = np.zeros(
-            shape=(len(self.tracksNp)), dtype=TYPEI)
+        self.oclClusterInverse = np.zeros(shape=(len(self.tracksNp)), dtype=TYPEI)
         self.oclClusterStarts = np.empty(0, dtype=TYPEI)
         self.oclClusterLengths = np.empty(0, dtype=TYPEI)
         trackCounter = 0
         for c in range(len(self.clusters)):
-            self.oclClusterStarts = np.append(
-                self.oclClusterStarts, trackCounter)
-            self.oclClusterLengths = np.append(
-                self.oclClusterLengths, len(self.clusters[c]))
+            self.oclClusterStarts = np.append(self.oclClusterStarts, trackCounter)
+            self.oclClusterLengths = np.append(self.oclClusterLengths, len(self.clusters[c]))
             for i in range(len(self.clusters[c])):
-                self.oclClusterIndices = np.append(
-                    self.oclClusterIndices, self.clusters[c][i])
+                self.oclClusterIndices = np.append(self.oclClusterIndices, self.clusters[c][i])
                 self.oclClusterInverse[self.clusters[c][i]] = c
             trackCounter += len(self.clusters[c])
 
     def printPrepareOpenClSummary(self, cl):
         """ Just some debug output """
         print("\nData preparation summary:")
-        print(len(cl.oclPoints), "points organized in ", len(
-            self.tracksNp), "tracks and ", len(self.clusters), "clusters")
-        print("Radius: ", self.magnetRadius, ", step size: ",
-              self.stepsize, ", angle: ", self.angleMin)
-        print("stickyness: ", self.angleStick,
-              ", endpoint bundling: ", self.bundleEndPoints)
-        print("smoothing: ", self.smoothIntensity,
-              ", smoothing radius: ", self.smoothRadius)
+        print(len(cl.oclPoints), "points in ", len(self.tracksNp), "tracks and ", len(self.clusters), "clusters")
+        print("Radius: ", self.magnetRadius, ", step size: ", self.stepsize, ", angle: ", self.angleMin)
+        print("stickyness: ", self.angleStick, ", endpoint bundling: ", self.bundleEndPoints)
+        print("smoothing: ", self.smoothIntensity, ", smoothing radius: ", self.smoothRadius)
 
     def convertOpenClSettingsToClTypes(self, cl):
         """ Converts to respective c-like floats/ints. This step is performed separately, which 
@@ -167,16 +160,13 @@ class EdgeBundler:
         cl.oclClusterInverse = np.array(self.oclClusterInverse, dtype=np.int32)
         # Scalar values; For copy-and-paste reasons they are handled as array, too, since
         # openCl doesn't care anyway (in OpenCL we receive pointers only)
-        cl.oclMagnetRadius = np.array(
-            [self.magnetRadius * self.scale], dtype=np.float32)
+        cl.oclMagnetRadius = np.array([self.magnetRadius * self.scale], dtype=np.float32)
         cl.oclStepsize = np.array([self.stepsize], dtype=np.float32)
         cl.oclAngleMin = np.array([self.angleMin], dtype=np.float32)
         cl.oclAngleStick = np.array([self.angleStick], dtype=np.float32)
-        cl.oclBundleEndPoints = np.array(
-            [self.bundleEndPoints], dtype=np.int32)
+        cl.oclBundleEndPoints = np.array([self.bundleEndPoints], dtype=np.int32)
         cl.oclSmoothRadius = np.array([self.smoothRadius], dtype=np.int32)
-        cl.oclSmoothIntensity = np.array(
-            [self.smoothIntensity], dtype=np.float32)
+        cl.oclSmoothIntensity = np.array([self.smoothIntensity], dtype=np.float32)
 
     def prepareOpenClBuffers(self, cl):
         """ Copies the data into buffer objects (in order to transfer them to GPU) """
@@ -253,7 +243,6 @@ class EdgeBundler:
             return
 
         cl = EdgeBundlerClComponents()
-
         self.quickBundles()
         self.prepareOpenCl(cl)
         chunkSizes = self.getChunkSizes()
@@ -265,8 +254,7 @@ class EdgeBundler:
             sourceCode = sourceCodeFile.read()
         # How to add flags, like constants: .build(options=['-D', "WINDOW=111",...])
         prg = pyopencl.Program(cl.ctx, sourceCode).build()
-        print("Run edge bundling in ",
-              (self.bundlingIterations * len(chunkSizes)), "iterations: ")
+        print("Run edge bundling in ", (self.bundlingIterations * len(chunkSizes)), "iterations: ")
         for i in range(self.bundlingIterations):
             # Step 1: edge bundling (piecewise, to avoid freezes and to provide better status updates)
             offset = 0
@@ -274,8 +262,7 @@ class EdgeBundler:
                 self.simpleStatusPrint(i * len(chunkSizes) + j)
                 numThreads = chunkSizes[j]
                 offsetInt32 = np.array(offset, dtype=np.int32)
-                cl.oclOffsetBuf = pyopencl.Buffer(
-                    cl.ctx, cl.mf.READ_ONLY | cl.mf.COPY_HOST_PTR, hostbuf=offsetInt32)
+                cl.oclOffsetBuf = pyopencl.Buffer(cl.ctx, cl.mf.READ_ONLY | cl.mf.COPY_HOST_PTR, hostbuf=offsetInt32)
                 prg.skeletonize(cl.queue, [numThreads], None,
                                 cl.oclFiberStartsBuf,
                                 cl.oclFiberLengthsBuf,
@@ -316,8 +303,7 @@ class EdgeBundler:
                 offset += chunkSizes[j]
 
             # Step 4: again, move result to input slot
-            pyopencl.enqueue_copy(cl.queue, cl.oclPoints,
-                                  cl.oclPointsResultBuf)
+            pyopencl.enqueue_copy(cl.queue, cl.oclPoints, cl.oclPointsResultBuf)
             pyopencl.enqueue_copy(cl.queue, cl.oclPointsBuf, cl.oclPoints)
         print(" ")  # Newline after status prints
 
@@ -386,7 +372,6 @@ class EdgeBundler:
             clusters = [[] for i in range(self.numClusters)]
 
             for t in range(len(tracksQb)):
-                lowestDistance = 99999999
                 bestIndex = -1
 
                 # Create an array only filled with n times the track of interest (track t)
@@ -394,14 +379,11 @@ class EdgeBundler:
                 for ii in range(len(trackRepeated)):
                     trackRepeated[ii] = tracksQb[t]
 
-                diff = np.sum(
-                    np.sum(np.square(trackRepeated - meanTracks), axis=2), axis=1)
+                diff = np.sum(np.sum(np.square(trackRepeated - meanTracks), axis=2), axis=1)
                 bestIndex = np.argmin(diff)
                 clusters[bestIndex].append(t)
                 clustersReverse[t] = bestIndex
-            #print("Clusters: ", clusters)
-            meanTracks = self.calculateMeanTracksNumpy(
-                tracksQb, clustersReverse)
+            meanTracks = self.calculateMeanTracksNumpy(tracksQb, clustersReverse)
             clusterSizesDebug = []
             for ii in range(len(clusters)):
                 clusterSizesDebug.append(len(clusters[ii]))
