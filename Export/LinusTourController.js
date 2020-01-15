@@ -38,6 +38,7 @@ function LinusTourController(linus, gui)
         var editorLink = document.createElement("a");
         editorLink.innerHTML = "&bull; Open tour editor";
         editorLink.href = "#"; 
+        editorLink.id = "tourEditorButton";
         editorLink.onclick = this.showTourEditor.bind(this);
         this.gui.addChild(editorLink);
         
@@ -59,14 +60,24 @@ function LinusTourController(linus, gui)
     }
 
     /**
+     * Remove (destroy) the tour editor button (forever)
+     */
+    this.hideTourEditorLink = function() 
+    {
+        var e = document.getElementById("tourEditorButton");
+        e.parentElement.removeChild(e);
+    }
+
+    /**
      * Opens the editor for a tour
      */
     this.showTourEditor = function() 
     {
         if(this.isShowingEditor)
             return;
-
+        
         this.isShowingEditor = true;
+        this.hideTourEditorLink();
         this.tourEditor.create();
     }
 

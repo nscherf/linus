@@ -1766,6 +1766,7 @@ function Linus(gui) {
         var screenshotLink = document.createElement("a");
         screenshotLink.innerHTML = "&bull; Screenshot";
         screenshotLink.href = "#"; 
+        screenshotLink.id = "screenshotButton"; 
         screenshotLink.onclick = this.screenshot.bind(this);
         this.gui.addChild(screenshotLink);
 
@@ -1775,9 +1776,14 @@ function Linus(gui) {
         var exportLink = document.createElement("a");
         //exportLink.setAttribute("id", "exportLinkHolder");
         exportLink.innerHTML = "&bull; Download selection";
+        exportLink.id = "exportButton"; 
         exportLink.href = "#"; 
         exportLink.onclick = this.exportSelection.bind(this);
+        var exportLinkStatus = document.createElement("span");
+        exportLinkStatus.style.marginLeft = "5px";
+        exportLinkStatus.id = "exportButtonStatus";
         exportLinkHolder.appendChild(exportLink)
+        exportLinkHolder.appendChild(exportLinkStatus)
         this.gui.addChild(exportLinkHolder);
     },
 
@@ -1785,7 +1791,6 @@ function Linus(gui) {
 
     ///////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////// Selection-related and clicking-related functions
-
 
 
     // Does user click trigger and mouse simultaneously?
@@ -2081,141 +2086,215 @@ function Linus(gui) {
         return this.currentSelection;
     }
 
+    this.disableExportButton = function() {
+        var e = document.getElementById("exportButton");
+        e.style.opacity = 0.5;
+        e.style.cursor = "default";
+        e.onclick = 0;
+    }
+
+    this.enableExportButton = function() {
+        var e = document.getElementById("exportButton");
+        e.style.opacity = 1.;
+        e.style.cursor = "pointer";
+        e.onclick = this.exportSelection.bind(this);
+        var e2 = document.getElementById("exportButtonStatus");
+        e2.innerHTML = ""
+    }
+
+    this.getExportLine = function(data, entity, index, dim)
+    {
+        var code = ""
+        for(var i = 0; i < dim; i++)
+        {
+            code += data.positions[entity][index * dim + i] + ";";
+        }
+        for(var i = 0; i < data.attributes.length; i++)
+        {   
+            // They may not exist or be incomplete, if data is shared
+            if(data.attributes[i].values === undefined)
+                continue; 
+            if(data.attributes[i].values.length <= entity)
+                continue; 
+            if(data.attributes[i].values[entity].length <= index)
+                continue; 
+            code += data.attributes[i].values[entity][index] + ";";
+        }
+        code += "\n";
+        return code 
+    }
+
+    this.getExportHeader = function(data, entity, dim)
+    {
+        var code = ""
+        var dims = ["x", "y", "z", "w"];
+        for(var i = 0; i < dim; i++)
+        {
+            code += dims[i] + ";";
+        }
+        for(var i = 0; i < data.attributes.length; i++)
+        {   
+            // They may not exist or be incomplete, if data is shared
+            if(data.attributes[i].values === undefined)
+                continue; 
+            if(data.attributes[i].values.length <= entity)
+                continue; 
+            if(data.attributes[i].values[entity].length === 0)
+                continue; 
+            code += data.attributes[i].name + ";";
+        }
+        code += "\n";
+        return code 
+    }
+
+
+    this.exportShowStatus = function(description, current, sparse, maximum = null)
+    {
+        if(current % sparse == 0)
+            document.getElementById("exportButtonStatus").innerHTML = description + 
+                ": " + current + (maximum === null ? "" : (" of " + maximum))
+    }
+
+    this.exportPrepareData = function()
+    {
+        var selectionMap = this.currentSelection
+        var sets = [];
+        var dim = 3;
+
+        for(var i = 0; i < this.data.sets.length; i++)
+        {
+            console.log("Iterate over data sets ... now set ", i)
+            var set = {}
+            set.name = i + "_" + this.data.sets[i].name;
+            var numIndices = 2;
+            if(this.data.sets[i].type !== "lines")
+                continue; // TODO currently only export of lines
+            set.states = [];
+            console.log(this.data.sets[i].indices)
+            console.log(this.data.sets[i].states)
+            counter = 0;
+            for(var j = 0; j < this.data.sets[i].states.length; j++)
+            {
+                console.log("Iterate over data set states ... now state ", j)
+                var state = {}
+                state.name = j + "_" + this.data.sets[i].states[j].name;
+                state.elements = []
+                for(var k = 0; k < this.data.sets[i].entities.length; k++)
+                {
+                    var skip = false;
+                    var lastEntity = -1;
+                    var code = "";
+                    for(var m = 1; m < this.data.sets[i].entities[k].length; m++)
+                    {
+                        if(lastEntity !== this.data.sets[i].entities[k][m])
+                        {
+                            //console.log("new line", this.data.sets[i].entities[k][m])
+                            counter++;
+                            this.exportShowStatus("Converting trajectories", counter, 100)
+                            skip = false;
+                            var lineId = i.toString() + "_" + this.data.sets[i].entities[k][m].toString();
+                            if(selectionMap[lineId] === undefined)
+                            {
+                                skip = true;
+                            }
+                            //console.log(code)
+                            if(code !== "")
+                                state.elements.push(code)
+                            code = "";
+                            if(!skip)
+                            {
+                                code += this.getExportHeader(this.data.sets[i].states[j],
+                                    k,
+                                    dim)
+                                code += this.getExportLine(this.data.sets[i].states[j],
+                                            k,
+                                            this.data.sets[i].indices[k][numIndices * m] - 1,
+                                            dim)
+                            }
+                        }
+                        lastEntity = this.data.sets[i].entities[k][m]
+
+                        if(!skip)
+                        {
+                            code += this.getExportLine(this.data.sets[i].states[j],
+                                        k,
+                                        this.data.sets[i].indices[k][numIndices * m],
+                                        dim)
+                        }
+                    }
+                    if(code !== "")
+                        state.elements.push(code)
+                }
+                set.states.push(state)
+            }
+            sets.push(set);
+        }
+
+        console.log("EXPORT: ")
+        console.log(sets)
+        return sets;
+    }
+
     // Creates a dataset like the original one, but only with selected. TODO: However, it is complicated to display the result,
     // since the text can have multiple megabytes...
     this.exportSelection = function()
     {
-        var selectionMap = this.currentSelection
-        var exportData = {}
-        exportData.dim = this.data.dim;
-        exportData.sets = [];
+        this.disableExportButton();
+        var data = this.exportPrepareData();
+        this.downloadZippedCsv("export.zip", data)
+        
+    }
 
-        for(var i = 0; i < this.data.sets.length; i++)
+    this.downloadZippedCsv = function(filename, data)
+    {
+        var zip = new JSZip();
+        for(var set = 0; set < data.length; set++)
         {
-            var set = {}
-            set.name = this.data.sets[i].name;
-            set.type = this.data.sets[i].type;
-            set.entities = [];
-            set.indices = [];
-            set.states = [];
-
-            // Copy the lookup map for IDs
-            for(var j = 0; j < this.data.sets[i].entities.length; j++)
+            var setFolder = zip.folder(data[set].name)
+            for(var state = 0; state < data[set].states.length; state++)
             {
-                var entities = []
-                var indices = []
-                var runningIndex = 0;
-                var lastEntity = -1
-                for(var k = 0; k < this.data.sets[i].entities[j].length; k++)
+                var stateFolder = setFolder.folder(data[set].states[state].name)
+                for(var i = 0; i < data[set].states[state].elements.length; i++)
                 {
-                    var lineId = i.toString() + "_" + this.data.sets[i].entities[j][k].toString();
-                    if(selectionMap[lineId] !== undefined)
-                    {
-                        // Everything except for first time, add indices
-                        if(lastEntity === this.data.sets[i].entities[j][k])
-                        {
-                            indices.push(runningIndex - 1);
-                            indices.push(runningIndex);
-                        }
-                        runningIndex += 1;
-                        lastEntity = this.data.sets[i].entities[j][k]
-                            
-                        entities.push(this.data.sets[i].entities[j][k]);
-                    }
-                }
-                if(entities.length !== 0)
-                {
-                    set.entities.push(entities);
-                    set.indices.push(indices);
+                    stateFolder.file(i + ".csv", data[set].states[state].elements[i]);
                 }
             }
-
-            for(var j = 0; j < this.data.sets[i].states.length; j++)
-            {
-                var state = {}
-                state.name = this.data.sets[i].states[j].name;
-                state.attributes = [];
-                state.positions = [];
-                // Copy all positions
-                for(var k = 0; k < this.data.sets[i].states[j].positions.length; k++)
-                {
-                    var track = []
-                    for(var m = 0; m < this.data.sets[i].states[j].positions[k].length / this.data.dim; m++)
-                    {
-
-                        if(this.data.sets[i].entities[k][m] === undefined)
-                            console.log("Problem at dataset",i,":",k, m, "of", this.data.sets[i].entities)
-                        var lineId = i.toString() + "_" + this.data.sets[i].entities[k][m].toString();
-                        
-                        if(selectionMap[lineId] !== undefined)
-                        {
-                            // Yessss! It was selected. Let's fill the contents
-                            for(var d = 0; d < this.data.dim; d++)
-                            {
-                                track.push(this.data.sets[i].states[j].positions[k][this.data.dim * m + d]);
-                            }
-                        }
-                    }
-
-                    if(track.length !== 0)
-                    {
-                        state.positions.push(track);
-                    }
-                }
-
-                for(var n = 0; n < this.data.sets[i].states[j].attributes.length; n++)
-                {
-                    var attDim = this.data.sets[i].states[j].attributes[n].dim;
-                    var attribute = {}
-                    attribute.name = this.data.sets[i].states[j].attributes[n].name;
-                    attribute.dim = attDim;
-                    attribute.fixedColor = this.data.sets[i].states[j].attributes[n].fixedColor;
-                    attribute.shared = this.data.sets[i].states[j].attributes[n].shared;
-                    attribute.values = []
-
-                    if(this.data.sets[i].states[j].attributes[n].values !== undefined)
-                    {
-                        for(var k = 0; k < this.data.sets[i].states[j].attributes[n].values.length; k++)
-                        {
-                            var attributeValues = []
-                            for(var m = 0; m < this.data.sets[i].states[j].attributes[n].values[k].length / attDim; m++)
-                            {
-                                var lineId = i.toString() + "_" + this.data.sets[i].entities[k][m].toString();
-                            
-                                if(selectionMap[lineId] !== undefined)
-                                {
-                                    for(var d = 0; d < attDim; d++)
-                                    {
-                                        attributeValues.push(this.data.sets[i].states[j].attributes[n].values[k][attDim * m + d]);
-                                    }
-                                }
-                            } 
-                            if(attributeValues.length !== 0)
-                            {
-                                attribute.values.push(attributeValues);
-                            }
-                        }
-                    }
-                    state.attributes.push(attribute)
-                }   
-                set.states.push(state);
-            }
-            exportData.sets.push(set);
         }
+        console.log("Zip was prepared")
+        zip.generateAsync({type:"blob"}, function(metadata) {
+            this.exportShowStatus("Zipping", parseInt(metadata.percent), 1, 100)}.bind(this))
+        .then(function(content) {
+            // see FileSaver.js
+            console.log("Create downloadable file")
+            saveAs(content, filename);
+            this.enableExportButton();
+        }.bind(this));
+    }
 
-        console.log("EXPORT: ")
-        console.log(exportData)
-        this.downloadText("export.json", JSON.stringify(exportData, null, 1));
-    },
+    this.disableScreenshotButton = function() {
+        var e = document.getElementById("screenshotButton");
+        e.style.opacity = 0.5;
+        e.style.cursor = "default";
+        e.onclick = 0;
+    }
+
+    this.enableScreenshotButton = function() {
+        var e = document.getElementById("screenshotButton");
+        e.style.opacity = 1.;
+        e.style.cursor = "pointer";
+        e.onclick = this.screenshot.bind(this);
+    }
 
     this.screenshot = function() {
+        this.disableScreenshotButton();
         //var dataURL = this.canvas.toDataURL('image/png');
         this.renderer.domElement.toBlob(function(blob){
             date = new Date();
             var dateString = date.getFullYear() + "-" + (1+date.getMonth()) + "-" + date.getDate() + ", " +
                 date.getHours() + "-" + ("00" + date.getMinutes()).slice(-2) + "-" + date.getSeconds()
             saveAs(blob, 'screenshot ' + dateString + '.png');
-        }, 'image/png');
+            this.enableScreenshotButton();
+        }.bind(this), 'image/png');
     }
 
     // TODO: find a reasonable/acceptable way to download or display the text representing the filtered data
