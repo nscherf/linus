@@ -1,6 +1,6 @@
 import os
 import argparse
-import VisTool as vt
+import DataConverter as dc
 
 # Output OpenCL compiler messages (including warnings).
 os.environ['PYOPENCL_COMPILER_OUTPUT'] = "1"
@@ -27,7 +27,7 @@ parser.add_argument("--csvNoHeader", help="By default, the first line is assumed
 parser.add_argument("--csvSep", help="Add the CSV separator you are using (default: ,)", action='store_true', default=",")
 
 print("Prepare your trajectory data for a WebGL-based interactive visualization.")
-print("Please provide at least one data source. Find the result in ./export/")
+print("Please provide at least one data source. Find the result in ./Export/")
 print("Use -h to show the help.")
 print()
 
@@ -56,20 +56,20 @@ loadFromCmd = tgmmPath != None or csvPath != None or biotracksPath != None or sv
 if loadFromCmd:
     if csvPath is not None:
         print("Load from CSV...")
-        loader = vt.CsvLoader(csvPath, resampleTo=resampleTo, minTrackLength=skipSmallerThan, firstLineIsHeader=(csvNoHeader is None), csvSeparator=csvSep)
+        loader = dc.CsvLoader(csvPath, resampleTo=resampleTo, minTrackLength=skipSmallerThan, firstLineIsHeader=(csvNoHeader is None), csvSeparator=csvSep)
     if tgmmPath is not None:
         print("Load from TGMM...")
-        loader = vt.TgmmLoader(tgmmPath, resampleTo=resampleTo, minTrackLength=skipSmallerThan,)
+        loader = dc.TgmmLoader(tgmmPath, resampleTo=resampleTo, minTrackLength=skipSmallerThan,)
     if biotracksPath is not None:
         print("Load from Biotracks...")
-        loader = vt.BiotracksLoader(biotracksPath, resampleTo=resampleTo, minTrackLength=skipSmallerThan,)
+        loader = dc.BiotracksLoader(biotracksPath, resampleTo=resampleTo, minTrackLength=skipSmallerThan,)
     if svfPath is not None:
         print("Load from SVF...")
-        loader = vt.SvfLoader(svfPath, resampleTo=resampleTo, minTrackLength=skipSmallerThan, csvSeparator=csvSep)
+        loader = dc.SvfLoader(svfPath, resampleTo=resampleTo, minTrackLength=skipSmallerThan, csvSeparator=csvSep)
     tracks, attributes, names = loader.get()
 
     # Start the track modifier that adjusts the data or adds attributes
-    tm = vt.TrackModifier(tracks, attributes, names)
+    tm = dc.TrackModifier(tracks, attributes, names)
 
     scale = 1.
     if scaleToUnit is not None:
@@ -93,11 +93,11 @@ if loadFromCmd:
     tracks, attributes, names = tm.get()
 
     # Prepare the output
-    wgb = vt.WebGlToolBuilder()
+    wgb = dc.WebGlToolBuilder()
 
     # First, add background data. Note, we need the scale we derived from the tracks
     if stlPath is not None:
-        triangles = vt.TriangleLoader()
+        triangles = dc.TriangleLoader()
         triangles.setScale(scale)
         triangles.addFromStl(stlPath)
         positions, indices, normals = triangles.get()
@@ -109,7 +109,7 @@ if loadFromCmd:
     # Add states (to the last dataset, which is the trajectory set)
     if addBundled is not None:
         tm.addAttributeAngleToStart()
-        bundler = vt.EdgeBundler(tracks)
+        bundler = dc.EdgeBundler(tracks)
         bundler.estimateDefaultValues()
         bundler.runEdgeBundlingOpenCl()
         tracksBundled = bundler.getResult()
@@ -117,7 +117,7 @@ if loadFromCmd:
 
     # Output results
     wgb.setDecimalDigits(5)
-    wgb.writeJson("export/data/data.json", (useZip is not None))
+    wgb.writeJson("Export/data/data.json", (useZip is not None))
     print("Created", tracks.shape[0], "tracks, each of size", tracks.shape[1])
     print("Added the following attributes:", names)
 
