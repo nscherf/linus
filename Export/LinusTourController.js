@@ -46,17 +46,36 @@ function LinusTourController(linus, gui)
         var tourList = document.createElement("div");
         tourList.setAttribute("id", "tourList");
         
-        for(var id in this.tours) {
+        var isAnyTourLoaded = false;
+
+        for(var id in this.tours) 
+        {
             console.log("Add tour", id)
             var tourLink = document.createElement("a");
             var p = {context: this, id: id};
             tourLink.onclick = function() {this.context.startOrLoadTour(this.id, false);}.bind(p);
-            tourLink.innerHTML = "&bull;  tour "+id;
+            tourLink.innerHTML = "&bull;  "+id;
             tourLink.href = "#";
             tourList.appendChild(tourLink);
+            isAnyTourLoaded = true;
+        }
+
+        if(isAnyTourLoaded)
+        {
+            var editorHeadline = document.createElement("span");
+            editorHeadline.innerHTML = "Start a tour:";
+            editorHeadline.id = "tourEditorHeadline";
+            this.gui.addChild(editorHeadline);
         }
 
         this.gui.addChild(tourList);
+    }
+
+    this.changeStartTourHeadline = function(text)
+    {
+        var e = document.getElementById("tourEditorHeadline")
+        if(e !== null)
+            e.innerHTML = text;
     }
 
     /**
@@ -76,6 +95,7 @@ function LinusTourController(linus, gui)
         if(this.isShowingEditor)
             return;
         
+        this.changeStartTourHeadline("Add tour to editor:");
         this.isShowingEditor = true;
         this.hideTourEditorLink();
         this.tourEditor.create();

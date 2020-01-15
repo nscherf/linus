@@ -1770,7 +1770,6 @@ function Linus(gui) {
         screenshotLink.onclick = this.screenshot.bind(this);
         this.gui.addChild(screenshotLink);
 
-
         var exportLinkHolder = document.createElement("div");
         exportLinkHolder.setAttribute("id", "exportLinkHolder");
         var exportLink = document.createElement("a");
@@ -2093,7 +2092,7 @@ function Linus(gui) {
         e.onclick = 0;
     }
 
-    this.enableExportButton = function() {
+    this.enableExportButtonAndHideStatus = function() {
         var e = document.getElementById("exportButton");
         e.style.opacity = 1.;
         e.style.cursor = "pointer";
@@ -2170,8 +2169,6 @@ function Linus(gui) {
             if(this.data.sets[i].type !== "lines")
                 continue; // TODO currently only export of lines
             set.states = [];
-            console.log(this.data.sets[i].indices)
-            console.log(this.data.sets[i].states)
             counter = 0;
             for(var j = 0; j < this.data.sets[i].states.length; j++)
             {
@@ -2186,9 +2183,12 @@ function Linus(gui) {
                     var code = "";
                     for(var m = 1; m < this.data.sets[i].entities[k].length; m++)
                     {
+                        // If we reach a new entity, check if this entity is part of the 
+                        // selection, create the header, export the first line of the data.
+                        // (After that, only the second point of each line segment will be
+                        // exported, that's why we specifically need to export the first point here)
                         if(lastEntity !== this.data.sets[i].entities[k][m])
                         {
-                            //console.log("new line", this.data.sets[i].entities[k][m])
                             counter++;
                             this.exportShowStatus("Converting trajectories", counter, 100)
                             skip = false;
@@ -2230,12 +2230,12 @@ function Linus(gui) {
             sets.push(set);
         }
 
-        console.log("EXPORT: ")
-        console.log(sets)
+        console.log("Export:", sets)
         return sets;
     }
 
-    // Creates a dataset like the original one, but only with selected. TODO: However, it is complicated to display the result,
+    // Creates a dataset like the original one, but only with selected. 
+    // TODO: However, it is complicated to display the result,
     // since the text can have multiple megabytes...
     this.exportSelection = function()
     {
@@ -2264,10 +2264,9 @@ function Linus(gui) {
         zip.generateAsync({type:"blob"}, function(metadata) {
             this.exportShowStatus("Zipping", parseInt(metadata.percent), 1, 100)}.bind(this))
         .then(function(content) {
-            // see FileSaver.js
             console.log("Create downloadable file")
             saveAs(content, filename);
-            this.enableExportButton();
+            this.enableExportButtonAndHideStatus();
         }.bind(this));
     }
 
