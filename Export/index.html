@@ -42,7 +42,17 @@
         <div class="welcomeBox">
             The data being loaded can reach up to 100MB. Ensure you have a proper internet connection. <br>
             In addition, preparation and processing of the data may take half a minute.<br><br>
-            <a href="main.html">Okay, start the Visualization!</a>
+            <a href="main.html" id="linkToVisualization">Okay, start the Visualization!</a>
+            <script>
+                //Iterate the search visualization parameters and forward them to the actual visualization
+                var thisLocation = new URL(window.location.href);
+                var link = new URL(document.getElementById("linkToVisualization").href);
+                for (let p of thisLocation.searchParams) {
+                    console.log("Forward parameter", p);
+                    link.searchParams.append(p[0], p[1])
+                }
+                document.getElementById("linkToVisualization").href = link.toString();
+            </script>
         </div>
     </body>
 </html>

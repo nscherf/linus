@@ -12,7 +12,7 @@ You can either use a custom python script to set up your dataset or you can use 
 ```python
 python3 run.py -csv ./mydata/
 ```
-This creates the ready-to-use visualization just from a folder of CSV files. You can check all options by calling
+This creates the ready-to-use visualization just from a folder of CSV files. You can check all options for the conversion by calling
 ```python
 python3 run.py -h
 ``` 
@@ -63,7 +63,7 @@ The WebGlToolBuilder is the tool that collects all information and creates a sin
 
 
 ## 2. Data exploration
-The export folder contains all necessary data. It can be shared in any way you wish. For example, you can upload it to a server, or just open the file export/index.html locally. You can select data by holding button [s] and drawing a rectangle on the screen. A double click 
+The export folder contains all necessary data. It can be shared in any way you wish. For example, you can upload it to a server, or just open the file export/index.html locally. You can select data by holding button [s] and drawing a rectangle on the screen. A double click resets the selection and shows all trajectories.
 
 ### 2.1. The general concept
 On the right side you can see a menu. First, it shows some general settings. This includes the size of the menu and options to (re)set the camera to a certain position. An interesting point here is the "Render order" - this setting defines how frequently the 3D data is sorted. A low frequency leads to visual artifacts (the background appears to be in front of the foreground) and a high frequency leads to bad performance. By default, a trade-off is selected: the data is sorted a moment after whenever the camera positions was changed.
@@ -105,6 +105,9 @@ You can choose whether the tour should start automatically or not by (un-)checki
 
 
 ## Questions and answers
+
+### I want to skip the landing page and directly show the visualization
+Just open the main.html instead of the index.html, or share a link to http://your-data.server/main.html?tour=test (instead of http://your-data.server/?tour=test or http://your-data.server/index.html?tour=test). However, be nice and warn the user that a lot of traffic could be produced.
 
 ### Structure of JSON (with annotations)
 How does the data look like? First we show an empty example with comments:
