@@ -1489,7 +1489,7 @@ function Linus(gui) {
         this.gui.create();
 
         this.gui.addMainHeadline("General settings")
-        this.gui.addSelection("Gui scale", ["Small", "Medium", "Large"], 1, function(val) {this.scale((val == 0 ? 250 : (val == 1 ? 400 : 600)))}.bind(this), false)
+        this.gui.addSelection("Gui scale", ["Small", "Medium", "Large"], 1, function(val) {this.gui.scale((val == 0 ? 250 : (val == 1 ? 400 : 600)))}.bind(this), false)
 
         var cameraLinks = document.createElement("div");
         var cameraLinksTag = document.createElement("div");
