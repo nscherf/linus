@@ -91,8 +91,9 @@ function LinusGUI()
         var tagField = document.createElement("div")
         tagField.textContent = this.getDisplayName(name)
         tagField.setAttribute("class", "guiTag")
-        var valueField = document.createElement("div")
-        valueField.textContent = value
+        var valueField = document.createElement("input")
+        valueField.setAttribute("type", "number")
+        valueField.value = value
         valueField.setAttribute("class", "guiValueFloat")
         
         var slider = document.createElement("input")
@@ -109,12 +110,20 @@ function LinusGUI()
         line.appendChild(valueField)
         e.appendChild(line)
         
+        valueField.addEventListener('input', function () {
+            this.values[name] = valueField.value
+            slider.value = valueField.value
+            callback(valueField.value)
+            //valueField.blur() // Leave focus, otherwise selection cannot work
+        }.bind(this), false);
+
         slider.addEventListener('input', function () {
             this.values[name] = slider.value
-            valueField.textContent = slider.value
+            valueField.value = slider.value
             callback(slider.value)
             slider.blur() // Leave focus, otherwise selection cannot work
         }.bind(this), false);
+
         this.elementCounter += 1
     }
 

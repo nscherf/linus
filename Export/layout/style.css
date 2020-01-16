@@ -211,6 +211,15 @@ li:hover {
 
 }
 
+#guiArea input[type=number] {
+    width: 60px;
+    height: 15px;
+    font-size:11px;
+    margin: 2px;
+    background: transparent;
+    border: 0px;
+    color: #ffffff;
+}
 .guiAreaRestricted {
     opacity: 0;
     pointer-events: none;

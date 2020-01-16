@@ -1232,11 +1232,8 @@ function Linus(gui) {
         {
             this.updateAnnotationPositions(); 
             requestAnimationFrame(this.animateFrame.bind(this)); // without WEBVR: add this line
+            this.controls.update();
         }
-
-        
-
-        this.controls.update();
 
         this.stats.update();
         this.sortSegments()
@@ -1324,9 +1321,9 @@ function Linus(gui) {
     this.sortSegments = function()
     {
         // Stop sorting based on the time criterion, or when we we do not want to sort
-        if( (this.sortFrequency == 4 && this.sortNeedShuffle == false) ||
-            (this.sortFrequency == 3 && ((Date.now() - this.lastSort) < 5000)) ||
-            this.sortFrequency == 2 && ((Date.now() - this.lastSort) < 1000) )
+        if((this.sortFrequency == 4 && this.sortNeedShuffle == false) ||
+           (this.sortFrequency == 3 && ((Date.now() - this.lastSort) < 5000)) ||
+            this.sortFrequency == 2 && ((Date.now() - this.lastSort) < 1000))
         {
 
             return;
@@ -1342,7 +1339,7 @@ function Linus(gui) {
             rotation = rotation.inverse(rotation)
             camPos = new THREE.Vector3(0, 0,-5 )
             camPos.applyQuaternion(rotation)
-            camPos.add(this.webVrDisplacement)
+            //camPos.add(this.webVrDisplacement)
             /*
             // DEBUG: Camera
             this.scene.children[1].position.set(0,0,0)
@@ -1524,6 +1521,25 @@ function Linus(gui) {
             }
             this.backgroundColor = val
         }.bind(this), false);    
+
+        if(this.webVr) 
+        {
+            this.gui.addFloat("VR Camera pos. x", -5., 5., this.webVrDisplacement.x, function(val) {
+                this.scene.children[0].position.sub(this.webVrDisplacement)
+                this.webVrDisplacement.setX(parseFloat(val))
+                this.scene.children[0].position.add(this.webVrDisplacement)
+            }.bind(this), false)
+            this.gui.addFloat("VR Camera pos. y", -5., 5., this.webVrDisplacement.y, function(val) {
+                this.scene.children[0].position.sub(this.webVrDisplacement)
+                this.webVrDisplacement.setY(parseFloat(val))
+                this.scene.children[0].position.add(this.webVrDisplacement)
+            }.bind(this), false)
+            this.gui.addFloat("VR Camera pos. z", -5., 5., this.webVrDisplacement.z, function(val) {
+                this.scene.children[0].position.sub(this.webVrDisplacement)
+                this.webVrDisplacement.setZ(parseFloat(val))
+                this.scene.children[0].position.add(this.webVrDisplacement)
+            }.bind(this), false)
+        }
 
 
 
@@ -1814,6 +1830,11 @@ function Linus(gui) {
     // onmousedown event handler, and only if trigger button is pressed, too
     this.onmousedown = function(e) 
     {
+        if(this.renderer.domElement !== e.target)
+        {
+            // Never notice this click if it wasn't targeted at the canvas
+            return;
+        }
         if(this.pressingButton)
         {
             this.clickingMouseButton = true
