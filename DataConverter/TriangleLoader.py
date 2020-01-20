@@ -18,10 +18,13 @@ class TriangleLoader:
     def get(self):
         return self.positions, self.indices, self.normals
 
-    def setScale(self, scale, center=[0, 0, 0]):
+    def setScale(self, scale):
+        """ Set scale and center in order to adjust the triangle coordinates """
+        self.scale = scale
+
+    def setCenter(self, center):
         """ Set scale and center in order to adjust the triangle coordinates """
         self.center = center
-        self.scale = scale
 
     def calculateNormal(self, p1, p2, p3):
         """ Simple triangle-based approach to calculate normals """
@@ -35,37 +38,8 @@ class TriangleLoader:
         n = [Uy*Vz - Uz*Vy, Uz*Vx - Ux*Vz, Ux*Vy - Uy*Vx]
         l = math.sqrt(sum([x**2 for x in n]))
         return [x / l for x in n]
-
-    def addFromObj(self, filename):
-        """ Import obj file """
-        import re
-        reComp = re.compile("(?<=^)(v |vn |vt |f )(.*)(?=$)", re.MULTILINE)
-        with open(filename) as f:
-            data = [txt.group() for txt in reComp.finditer(f.read())]
-
-        v_arr, vn_arr, vt_arr, f_arr = [], [], [], []
-        for line in data:
-            tokens = line.split(' ')
-            if tokens[0] == 'v':
-                v_arr.append([float(c) for c in tokens[1:]])
-            elif tokens[0] == 'vn':
-                vn_arr.append([float(c) for c in tokens[1:]])
-            elif tokens[0] == 'vt':
-                vn_arr.append([float(c) for c in tokens[1:]])
-            elif tokens[0] == 'f':
-                f_arr.append(
-                    [[int(i) if len(i) else 0 for i in c.split('/')] for c in tokens[1:]])
-
-        vertices, normals = [], []
-        for face in f_arr:
-            for tp in face:
-                vertices += v_arr[tp[0]-1][0:3]
-                normals += vn_arr[tp[2]-1]
-        indices = list(range(0, int(len(vertices)/3)))
-        entities = len(indices) * [0]
-        self.addData(entities, indices, vertices, normals)
-
-    def addFromObj2(self, file):
+    
+    def addFromObj(self, file):
         """ Import obj file """
 
         import pywavefront  # pip install PyWavefront
@@ -95,13 +69,13 @@ class TriangleLoader:
                 material.vertices
                 numPoints = int(len(material.vertices) / 3)
                 entities = entities + [len(self.entities)] * numPoints
-                indices = indices + \
-                    list(range(len(indices), (len(indices) + numPoints)))
+                indices = indices + list(range(len(indices), (len(indices) + numPoints)))
                 points = points + material.vertices
-                # for i in range(int(numPoints/3)):
-                #normal = self.calculateNormal(material.vertices[(9*i):(9*i+3)], material.vertices[(9*i+3):(9*i+6)], material.vertices[(9*i+6):(9*i+9)])
-                #normals += normal * 3
-                # Material properties
+                if len(normals) == 0:
+                    for i in range(int(numPoints/3)):
+                        normal = self.calculateNormal(material.vertices[(9*i):(9*i+3)], material.vertices[(9*i+3):(9*i+6)], material.vertices[(9*i+6):(9*i+9)])
+                        normals += normal * 3
+                     
 
                 material.diffuse
                 material.ambient
@@ -154,11 +128,11 @@ class TriangleLoader:
         pointsScaled = []
         for i in range(len(points)):
             if i % 3 == 0:
-                pointsScaled.append((points[i] - self.center[0]) * self.scale)
+                pointsScaled.append(points[i] * self.scale - self.center[0])
             elif i % 3 == 1:
-                pointsScaled.append((points[i] - self.center[1]) * self.scale)
+                pointsScaled.append(points[i] * self.scale - self.center[1])
             else:
-                pointsScaled.append((points[i] - self.center[2]) * self.scale)
+                pointsScaled.append(points[i] * self.scale - self.center[2])
         self.positions.append([pointsScaled])
         self.entities.append(entities)
         self.indices.append(indices)

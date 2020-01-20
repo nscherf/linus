@@ -66,7 +66,7 @@ class WebGlToolBuilder:
         s["entities"] = []
         for i in range(len(indices)):
             t = []
-            for p in range(int(len(indices[i]) / 3)):
+            for p in range(int(len(indices[i]))):
                 t.append(i)
             s["entities"].append(t)
 

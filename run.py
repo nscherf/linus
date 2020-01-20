@@ -14,6 +14,7 @@ parser.add_argument("-biotracks", help="The biotracks JSON file", default=None, 
 parser.add_argument("-tgmm", help="A folder containing (only) TGMM files with tracks", default=None, nargs="?")
 parser.add_argument("-svf", help="A SVF (CSV-like) file", default=None, nargs="?")
 parser.add_argument("--stl", help="A stl file for context/background", default=None, nargs="?")
+parser.add_argument("--obj", help="An obj file for context/background", default=None, nargs="?")
 parser.add_argument("--addRadius", help="Create an attribute containing the radius (distance to center)", action='store_true', default=None)
 parser.add_argument("--addAngle", help="Create an attribute containing the angle between initial orientation and local orientation", action='store_true', default=None)
 parser.add_argument("--addTime", help="Create an attribute containing the time/counter of the track position (first pos is 0, ..., n)", action='store_true', default=None)
@@ -38,6 +39,7 @@ tgmmPath = args.tgmm
 svfPath = args.svf
 biotracksPath = args.biotracks
 stlPath = args.stl
+objPath = args.obj
 addRadius = args.addRadius
 addAngle = args.addAngle
 addTime = args.addTime
@@ -80,6 +82,7 @@ if loadFromCmd:
     bary = [0., 0., 0.]
     if moveToCenter is not None:
         bary = tm.getBarycenter()
+        print("New center is at:", bary)
         tm.translate(-bary[0], -bary[1], -bary[2])
 
     # Add optional auto-generated attributes
@@ -99,7 +102,16 @@ if loadFromCmd:
     if stlPath is not None:
         triangles = dc.TriangleLoader()
         triangles.setScale(scale)
+        triangles.setCenter(bary)
         triangles.addFromStl(stlPath)
+        positions, indices, normals = triangles.get()
+        wgb.addTriangleDataset(positions, indices, normals, "Context", scale)
+
+    if objPath is not None:
+        triangles = dc.TriangleLoader()
+        triangles.setScale(scale)
+        triangles.setCenter(bary)
+        triangles.addFromObj(objPath)
         positions, indices, normals = triangles.get()
         wgb.addTriangleDataset(positions, indices, normals, "Context", scale)
 
