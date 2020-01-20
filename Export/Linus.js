@@ -2424,6 +2424,7 @@ function Linus(gui) {
     varying float vSetId;
     varying float vDrawIndex;
     varying float vDiscardThis;
+    varying float vHideThis;
     varying float vLongDiff;
     varying float vLatDiff;
     uniform float scale;
@@ -2468,18 +2469,19 @@ function Linus(gui) {
         float stateInternal = drawIndex >= 0. ? state : defocusState;
         #genericAttributeInterpolation#
         vDiscardThis = 0.;
+        vHideThis = 0.;
         if(positionOut.z < zLower || positionOut.z > zUpper || 
             positionOut.x < xLower || positionOut.x > xUpper || 
             positionOut.y < yLower || positionOut.y > yUpper )
         {
-            vDiscardThis = 1.;
+            vHideThis = 1.;
         }
 
         vec3 projPlaneNn = normalize(projPlaneN);
         vec3 planeTest = positionOut.xyz - projPlane;
         if(dot(planeTest, projPlaneNn) >= 0.)
         {
-            vDiscardThis = 1.;
+            vHideThis = 1.;
         }
         else if(projLevel > 0.001)
         {
@@ -2575,6 +2577,7 @@ function Linus(gui) {
     varying float vSetId;
     varying float vDrawIndex;
     varying float vDiscardThis;
+    varying float vHideThis;
     varying float vLongDiff;
     varying float vLatDiff;
     uniform float scale;
@@ -2620,18 +2623,19 @@ function Linus(gui) {
         float stateInternal = drawIndex >= 0. ? state : defocusState;
         #genericAttributeInterpolation#
         vDiscardThis = 0.;
+        vHideThis = 0.;
         if(positionOut.z < zLower || positionOut.z > zUpper || 
             positionOut.x < xLower || positionOut.x > xUpper || 
             positionOut.y < yLower || positionOut.y > yUpper )
         {
-            vDiscardThis = 1.;
+            vHideThis = 1.;
         }
 
         vec3 planeTest = positionOut.xyz - projPlane;
         vec3 projPlaneNn = normalize(projPlaneN);
         if(dot(planeTest, projPlaneN) >= 0.)
         {
-            vDiscardThis = 1.;
+            vHideThis = 1.;
         }
         else if(projLevel > 0.001)
         {
@@ -2715,6 +2719,7 @@ function Linus(gui) {
     varying float vDrawIndex;
     varying float vDepth;
     varying float vDiscardThis;
+    varying float vHideThis;
     uniform vec3 diffuse;
     uniform float opacity;
     uniform float scale;
@@ -2817,16 +2822,16 @@ function Linus(gui) {
             }
         }
 
-        if(vDrawIndex < 0. || vDiscardThis > 0.001)
+        if(vDrawIndex < 0. || vHideThis > 0.001)
         {
             gl_FragColor = vec4(clamp(sim * defocusColor, 0., 1.), defocusAlpha);
         }
-        /*
+        
         if(vDiscardThis > 0.001)
         {
             discard;
         }
-        */
+        
     #attributeFilter#
 
         // gl_FragColor = vec4(vNormal, 1.); // Debug outputs
