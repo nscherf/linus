@@ -2030,7 +2030,7 @@ function Linus(gui) {
         {
             for(var j = 0; j < this.scene.children[0].children[i].geometry.attributes.drawIndex.array.length; j++)
             {
-                if(this.scene.children[0].children[i].geometry.attributes.drawIndex.array[j] > 0.5)
+                if(!this.scene.children[0].children[i].selectable || this.scene.children[0].children[i].geometry.attributes.drawIndex.array[j] > 0.5)
                 {
                     rememberVisible[this.scene.children[0].children[i].geometry.totalLineId[j]] = 1;
                 }
