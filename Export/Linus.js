@@ -181,10 +181,18 @@ function Linus(gui) {
     // Moves the annotations to their correct 2D position (on top of the canvas)
     this.updateAnnotationPositions = function()
     {
-        var scale = this.getScale()
+        // Note, each set can have a custom scale. However, annotations are not 
+        // set-specific. Usually, all sets share the same scale and usually all
+        // sets are aligned to match the first set. Hence, we copy the scale 
+        // from the first set. (Maybe TODO?)
+        var scale = this.getScale() * this.data.sets[0].scale;
         for(var i = 0; i < this.annotations.length; i++)
         {
-            var newPos = this.toScreenXY(new THREE.Vector3(this.annotations[i].x, this.annotations[i].y, this.annotations[i].z).multiplyScalar(scale), this.camera, this.renderer.domElement)
+            var newPos = this.toScreenXY(new THREE.Vector3(this.annotations[i].x, 
+                                                           this.annotations[i].y, 
+                                                           this.annotations[i].z).multiplyScalar(scale), 
+                                        this.camera, 
+                                        this.renderer.domElement)
             this.annotations[i].domObject.style.left = (10 + newPos.x) + "px"; // 10 and 20 depend on the size of the box, see style.css
             this.annotations[i].domObject.style.top = (20 + newPos.y) + "px";
         }
