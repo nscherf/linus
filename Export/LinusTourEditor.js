@@ -181,7 +181,7 @@ function LinusTourEditor(linus, gui)
         if(document.getElementById("autoStartCheckbox").checked) {
             url.searchParams.append("autoStartTour", "")
         }
-        return url.toString();
+        return url.toString().replace("main.html", "index.html");
     }
 
     /**
