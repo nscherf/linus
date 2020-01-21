@@ -198,9 +198,12 @@ function LinusTourController(linus, gui)
                 var x = parseFloat(coords[0]);
                 var y = parseFloat(coords[1]);
                 var z = parseFloat(coords[2]);
+                var upX = parseFloat(coords[3]);
+                var upY = parseFloat(coords[4]);
+                var upZ = parseFloat(coords[5]);
                 var duration = parseFloat(c[3]);
 
-                this.moveCameraTo(delay, x, y, z, duration)
+                this.moveCameraTo(delay, x, y, z, upX, upY, upZ, duration)
             }
             else if(action === "fade")
             {
@@ -338,7 +341,7 @@ function LinusTourController(linus, gui)
     /**
      * Tour: move the camera to x,y,z (linear interpolation) 
      */
-    this.moveCameraTo = function(delay, x, y, z, timespan)
+    this.moveCameraTo = function(delay, x, y, z, upX, upY, upZ, timespan)
     {
         this.timer += delay * 1000 * this.timerSpeed;
         p = {}
@@ -346,6 +349,9 @@ function LinusTourController(linus, gui)
         p.x = x
         p.y = y
         p.z = z
+        p.upX = upX
+        p.upY = upY
+        p.upZ = upZ
         p.timespan = timespan * this.timerSpeed;
         p.context = this;
         p.linus = this.linus;
@@ -361,11 +367,18 @@ function LinusTourController(linus, gui)
         var fromX = p.context.camera.position.x
         var fromY = p.context.camera.position.y
         var fromZ = p.context.camera.position.z
+        var fromUpX = p.context.camera.up.x
+        var fromUpY = p.context.camera.up.y
+        var fromUpZ = p.context.camera.up.z
         var fps = 30;
         var numSteps = (fps * p.timespan)
         var x = (p.x - fromX) / numSteps;
         var y = (p.y - fromY) / numSteps;
         var z = (p.z - fromZ) / numSteps;
+        var upX = (p.upX - fromUpX) / numSteps;
+        var upY = (p.upY - fromUpY) / numSteps;
+        var upZ = (p.upZ - fromUpZ) / numSteps;
+        console.log("Up:", upX, upY, upZ);
 
         for(var i = 0; i < fps * p.timespan; i++)
         {
@@ -376,12 +389,13 @@ function LinusTourController(linus, gui)
             pp.x = fromX + i * x
             pp.y = fromY + i * y
             pp.z = fromZ + i * z
-            //console.log("Prepare motion ", pp.x, pp.y, pp.z); // TODO BUG Without this line there is a glitch once when the motion starts
+            pp.upX = fromUpX + i * upX
+            pp.upY = fromUpY + i * upY
+            pp.upZ = fromUpZ + i * upZ
             setTimeout(function(p) {
-                //console.log("set cam",p.x - p.context.camera.position.x, p.y - p.context.camera.position.y, p.z - p.context.camera.position.z);
                 p.linus.cameraUpdateCallback = function() {
                     p.linus.camera.position.set(p.x, p.y, p.z); 
-                    console.log(p.context.camera.position);
+                    p.linus.camera.up.set(p.upX, p.upY, p.upZ); 
                     p.linus.camera.lookAt(new THREE.Vector3(0,0,0));
                     p.linus.cameraUpdateCallback = function() {} // Self destruction to allow inputs from elsewhere
                 }.bind(p)
@@ -396,11 +410,14 @@ function LinusTourController(linus, gui)
         pp.x = p.x
         pp.y = p.y
         pp.z = p.z
+        pp.upX = p.upX
+        pp.upY = p.upY
+        pp.upZ = p.upZ
         setTimeout(function(p) {
             //console.log("set cam",p.x - p.context.camera.position.x, p.y - p.context.camera.position.y, p.z - p.context.camera.position.z);
             p.linus.cameraUpdateCallback = function() {
                 p.linus.camera.position.set(p.x, p.y, p.z); 
-                console.log(p.context.camera.position);
+                p.linus.camera.up.set(p.upX, p.upY, p.upZ); 
                 p.linus.camera.lookAt(new THREE.Vector3(0,0,0));
                 p.linus.cameraUpdateCallback = function() {} // Self destruction to allow inputs from elsewhere
             }.bind(p)

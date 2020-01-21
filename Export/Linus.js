@@ -1045,6 +1045,10 @@ function Linus(gui) {
         this.controls.staticMoving = true;
         this.controls.dynamicDampingFactor = 0;
         this.controls.rotateSpeed = 2.0;
+        this.controls.noPan = true;
+        this.controls.addEventListener( 'change', function() {
+            console.log("change", this.controls);
+         }.bind(this) );
         /*
         this.controls.zoomSpeed = 1.2;
         this.controls.panSpeed = 0.8;
@@ -2343,6 +2347,10 @@ function Linus(gui) {
         var x = (v === "+x") ? d : ((v === "-x") ? -d : 0);
         var y = (v === "+y") ? d : ((v === "-y") ? -d : 0);
         var z = (v === "+z") ? d : ((v === "-z") ? -d : 0);
+
+        // Bug of OrbitControls: camera on y axis means a freeze of controls
+        if(y !== 0)
+            x = 0.0000001;
         console.log("set cam to ", x, y, z);
         this.camera.position.x = x;
         this.camera.position.y = y;

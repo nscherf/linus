@@ -149,7 +149,12 @@ function LinusTourEditor(linus, gui)
                 var valueX = items[i].getElementsByClassName("tourItemCameraX")[0].value
                 var valueY = items[i].getElementsByClassName("tourItemCameraY")[0].value
                 var valueZ = items[i].getElementsByClassName("tourItemCameraZ")[0].value
-                source += delay + "~camera~" + valueX + "," + valueY + "," + valueZ + "~" + duration + "\n";
+                var valueUpX = items[i].getElementsByClassName("tourItemCameraUpX")[0].value
+                var valueUpY = items[i].getElementsByClassName("tourItemCameraUpY")[0].value
+                var valueUpZ = items[i].getElementsByClassName("tourItemCameraUpZ")[0].value
+                source += delay + "~camera~" + valueX + "," + valueY + "," + valueZ + "," +
+                    valueUpX + "," + valueUpY + "," + valueUpZ + 
+                    "~" + duration + "\n";
             }
             else if(items[i].getAttribute("name") == "tourChangeMarker")
             {
@@ -204,8 +209,11 @@ function LinusTourEditor(linus, gui)
                 var x = parseFloat(coords[0]);
                 var y = parseFloat(coords[1]);
                 var z = parseFloat(coords[2]);
+                var upX = parseFloat(coords[3]);
+                var upY = parseFloat(coords[4]);
+                var upZ = parseFloat(coords[5]);
                 var duration = parseFloat(c[3]);
-                this.addTourCamera(delay, x, y, z, duration);
+                this.addTourCamera(delay, x, y, z, upX, upY, upZ, duration);
             }
             else if(action === "fade")
             {
@@ -261,11 +269,21 @@ function LinusTourEditor(linus, gui)
     /**
      * Adds the current camera position to the tour editor
      */
-    this.addTourCamera = function(delay = null, x = null, y = null, z = null, duration = null)
+    this.addTourCamera = function(delay = null, 
+        x = null, 
+        y = null, 
+        z = null,
+        upX = null, 
+        upY = null, 
+        upZ = null, 
+        duration = null)
     {
         x = x == null ? this.camera.position.x : x;
         y = y == null ? this.camera.position.y : y;
         z = z == null ? this.camera.position.z : z;
+        upX = upX == null ? this.camera.up.x : upX;
+        upY = upY == null ? this.camera.up.y : upY;
+        upZ = upZ == null ? this.camera.up.z : upZ;
 
         var father = document.getElementById("tourCreatorList")
         var child = document.createElement("li")
@@ -279,6 +297,8 @@ function LinusTourEditor(linus, gui)
         headlineY.textContent = "y: "
         var headlineZ = document.createElement("span")
         headlineZ.textContent = "z: "
+
+
 
         child.appendChild(this.createBasicTourElements("Camera", delay, duration))
         
@@ -306,6 +326,41 @@ function LinusTourEditor(linus, gui)
         child.appendChild(inputY)
         child.appendChild(headlineZ)
         child.appendChild(inputZ)
+
+        var headlineUpX = document.createElement("span")
+        headlineUpX.textContent = "x: "
+        var headlineUpY = document.createElement("span")
+        headlineUpY.textContent = "y: "
+        var headlineUpZ = document.createElement("span")
+        headlineUpZ.textContent = "z: "
+
+        var inputUpX = document.createElement("input")
+        inputUpX.setAttribute("type", "number")
+        inputUpX.setAttribute("class", "tourItemCameraUpX")
+        inputUpX.setAttribute("title", "x coordinate in world space, which is roughly in range [2,2]")
+        inputUpX.setAttribute("value", upX)
+
+        var inputUpY = document.createElement("input")
+        inputUpY.setAttribute("type", "number")
+        inputUpY.setAttribute("class", "tourItemCameraUpY")
+        inputUpY.setAttribute("title", "y coordinate in world space, which is roughly in range [2,2]")
+        inputUpY.setAttribute("value", upY)
+
+        var inputUpZ = document.createElement("input")
+        inputUpZ.setAttribute("type", "number")
+        inputUpZ.setAttribute("class", "tourItemCameraUpZ")
+        inputUpZ.setAttribute("title", "z coordinate in world space, which is roughly in range [2,2]")
+        inputUpZ.setAttribute("value", upZ)
+
+
+
+        child.appendChild(document.createElement("br"))
+        child.appendChild(headlineUpX)
+        child.appendChild(inputUpX)
+        child.appendChild(headlineUpY)
+        child.appendChild(inputUpY)
+        child.appendChild(headlineUpZ)
+        child.appendChild(inputUpZ)
 
         this.tourChangeCounter++
         father.appendChild(child)

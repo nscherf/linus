@@ -136,7 +136,9 @@ li:hover {
     width: 50px;
 }
 
-.tourItemMarkerX, .tourItemMarkerY, .tourItemMarkerZ, .tourItemCameraX, .tourItemCameraY, .tourItemCameraZ
+.tourItemMarkerX, .tourItemMarkerY, .tourItemMarkerZ, 
+.tourItemCameraX, .tourItemCameraY, .tourItemCameraZ,
+.tourItemCameraUpX, .tourItemCameraUpY, .tourItemCameraUpZ
 {
     width: 30px;
 }
