@@ -1046,9 +1046,7 @@ function Linus(gui) {
         this.controls.dynamicDampingFactor = 0;
         this.controls.rotateSpeed = 2.0;
         this.controls.noPan = true;
-        this.controls.addEventListener( 'change', function() {
-            console.log("change", this.controls);
-         }.bind(this) );
+        
         /*
         this.controls.zoomSpeed = 1.2;
         this.controls.panSpeed = 0.8;
@@ -1518,8 +1516,26 @@ function Linus(gui) {
             cameraLink.onclick = function() {this.context.setCamera(this.d);}.bind(p);
             cameraLinks.appendChild(cameraLink);
         }
-
         this.gui.addChild(cameraLinks);
+        
+        var cameraRotateLinks = document.createElement("div");
+        var cameraRotateLinksTag = document.createElement("div");
+        cameraRotateLinksTag.innerHTML = "Rotate camera";
+        cameraRotateLinksTag.classList.add("guiTag");
+        cameraRotateLinks.appendChild(cameraRotateLinksTag);
+        for(var i = 0; i < directions.length; i++)
+        {
+            var cameraLink = document.createElement("a");
+            var d = directions[i];
+            cameraLink.href = "#";
+            cameraLink.classList.add("resetCamLink");
+            cameraLink.innerHTML = d;
+            var p = {context: this, d: d};
+            cameraLink.onclick = function() {this.context.rotateCamera(this.d);}.bind(p);
+            cameraRotateLinks.appendChild(cameraLink);
+        }
+        this.gui.addChild(cameraRotateLinks);
+
         this.gui.addFloat("Scene scale", 0.1, 5, this.getScale(), function(val) {this.setScale(val)}.bind(this), false)
         
         this.sortFrequency = 0; // this.numGlPrimitives > 100000 ? 0 : 1 // or decide based on number of triangles?
@@ -2357,6 +2373,25 @@ function Linus(gui) {
         this.camera.position.z = z;
         this.camera.updateProjectionMatrix();
         this.controls.update();
+    },
+
+
+    this.rotateCamera = function(v)
+    {
+        var m = new THREE.Matrix4();
+        var d = 5. / 180. * Math.PI;
+        switch(String(v)) {
+            case "+x": m.makeRotationX(d); break;
+            case "-x": m.makeRotationX(-d); break;
+            case "+y": m.makeRotationY(d); break;
+            case "-y": m.makeRotationY(-d); break;
+            case "+z": m.makeRotationZ(d); break;
+            case "-z": m.makeRotationZ(-d); break;
+        }
+
+        this.camera.position.applyMatrix4(m);
+        this.camera.up.applyMatrix4(m);
+        this.camera.updateProjectionMatrix();
     },
 
     // Define the trigger button press
