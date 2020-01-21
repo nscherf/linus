@@ -1,4 +1,4 @@
-# Linus -  easy-to-share, interactive, 3D figures
+# Linus -  easy-to-share, interactive 3D figures
 
 This tool aims to be a simple option for scientists to visualize their trajectory datasets. The tool consists of two parts. First, an offline Python script that performs preprocessing of tracks and creates a custom JSON. Second, a "webpage" that loads the JSON and renders the tracks in 3D.
 
