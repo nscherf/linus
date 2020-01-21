@@ -226,7 +226,7 @@ function LinusTourController(linus, gui)
                 this.setSelection(delay, JSON.parse(c[2]))
             }
         }
-        if(repeat) {setTimeout(function() {this.startTour(name)}.bind(this), this.timer)} else {this.showMenu();}
+        if(repeat && this.timer > 0) {setTimeout(function() {this.startTour(name)}.bind(this), this.timer)} else {this.showMenu();}
     }
 
     /**
@@ -367,7 +367,7 @@ function LinusTourController(linus, gui)
         var y = (p.y - fromY) / numSteps;
         var z = (p.z - fromZ) / numSteps;
 
-        for(var i = 0; i <= fps * p.timespan; i++)
+        for(var i = 0; i < fps * p.timespan; i++)
         {
             pp = {}
             pp.name = p.name;
@@ -396,7 +396,16 @@ function LinusTourController(linus, gui)
         pp.x = p.x
         pp.y = p.y
         pp.z = p.z
-        //setTimeout(function(p) {p.context.camera.position.set(p.x, p.y, p.z);}, p.timespan, pp);
+        setTimeout(function(p) {
+            //console.log("set cam",p.x - p.context.camera.position.x, p.y - p.context.camera.position.y, p.z - p.context.camera.position.z);
+            p.linus.cameraUpdateCallback = function() {
+                p.linus.camera.position.set(p.x, p.y, p.z); 
+                console.log(p.context.camera.position);
+                p.linus.camera.lookAt(new THREE.Vector3(0,0,0));
+                p.linus.cameraUpdateCallback = function() {} // Self destruction to allow inputs from elsewhere
+            }.bind(p)
+            
+        }, p.timespan, pp); 
     }
 
     /**
