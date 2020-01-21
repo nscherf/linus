@@ -129,7 +129,10 @@ if loadFromCmd:
 
     # Output results
     wgb.setDecimalDigits(5)
-    wgb.writeJson("Export/data/data.json", (useZip is not None))
+    outDir = "Export/data/"
+    if not os.path.isdir(outDir):
+        os.mkdir(outDir)
+    wgb.writeJson(outDir + "data.json", (useZip is not None))
     print("Created", tracks.shape[0], "tracks, each of size", tracks.shape[1])
     print("Added the following attributes:", names)
 

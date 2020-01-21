@@ -89,7 +89,10 @@ class TriangleLoader:
             vertices)! Adding a new entity will overwrite the indices. Make sure everything you
             add uses the same indices. """
         from stl import mesh  # pip install numpy-stl
+        from stl import stl 
+        print("Reading stl file")
         m = mesh.Mesh.from_file(file)
+        print("Done reading")
 
         # The next lines are arrays of arrays. We assume that each entity consists only of one 3D object.
         # For displaying multiple objects, create another "dataset" using a new instance of TriangleBuilder
