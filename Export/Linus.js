@@ -488,7 +488,7 @@ function Linus(gui) {
             {
                 newCode += "if(v" + this.capitalizeFirst(name) + " < " + name + "From"
                 + " || v" + this.capitalizeFirst(name)+" > " + name + "To" 
-                +") {discard; /*gl_FragColor.w = 0.0;*/} " + nl;
+                +") {hideBecauseFilter = 1.;} " + nl;
             }
         }
 
@@ -524,7 +524,7 @@ function Linus(gui) {
         }
 
         shader = shader.replace("#colorDefinition#", this.createAttributeForShader("colors", "vec3", "vSetId", 
-            this.setsAndStates.length, false, false, false, false, 4));
+            this.setsAndStates.length, false, false, false, false, 4, true));
         shader = shader.replace("#genericUniforms#", newCode);
         
         return shader
@@ -553,8 +553,14 @@ function Linus(gui) {
         return shader
     },
 
-    // Alters the shader source: interpolate state-specific attributes
     this.addCustomAttributesToShader = function(setId, shader)
+    {
+        return this.addCustomAttributesToShaderStep(setId, false,
+            this.addCustomAttributesToShaderStep(setId, true,shader))
+    }
+
+    // Alters the shader source: interpolate state-specific attributes
+    this.addCustomAttributesToShaderStep = function(setId, defineTypes, shader)
     {
         console.log("Call addCustomAttributesToShader for dataset ", setId)
         var newCode = "\n";
@@ -571,7 +577,7 @@ function Linus(gui) {
                 this.customAttributes[i].count, 
                 this.customAttributes[i].shared, 
                 this.customAttributes[i].interpolate, 
-                this.customAttributes[i].normalize, true, 4);
+                this.customAttributes[i].normalize, true, 4, defineTypes);
 
             if(this.customAttributes[i].shared)
             {
@@ -598,22 +604,32 @@ function Linus(gui) {
     // - positionOut, which is placed inside the shader function. The value is interpolated from position1, 
     //   position2, position3, according to the current user-selected state
     // - optionally, a pass to vPosition (however, it assumes this varying was created elsewhere!)
-    this.createAttributeForShader = function(attName, attType, dependency, count, shared, interpolate, normalize, addVarying, indent)
+    this.createAttributeForShader = function(attName, 
+        attType, 
+        dependency, 
+        count, 
+        shared, 
+        interpolate, 
+        normalize, 
+        addVarying, 
+        indent, 
+        defineTypes)
     {
         var nl = "\n" + Array(indent + 1).join(" ");
         var code = nl;
         if(shared)
         {
-            code += attType + " " + attName + "Out = " + attName + ";\n";
+            code += (defineTypes ? attType + " " : "") + attName + "Out = " + attName + ";\n";
         }
         else if(count == 1)
         {
-            code += attType + " " + attName + "Out = " + attName + "0;\n";
+            code += (defineTypes ? attType + " " : "") + attName + "Out = " + attName + "0;\n";
         }
         else
         {
-            code += "int "+attName+"Index = int("+dependency+");" + nl + "float "+attName+"Fade = "+dependency+" - float("+attName+"Index);" + nl;
-            code += attType + " " + attName + "Out;" + nl;
+            code += (defineTypes ? "int " : "") + attName + "Index = int("+dependency+");" + nl;
+            code += (defineTypes ? "float " : "") + attName + "Fade = "+dependency+" - float("+attName+"Index);" + nl;
+            code += (defineTypes ? attType + " " : "") + attName + "Out;" + nl;
             for(var i = 0; i < count; i++)
             {
                 if(interpolate && i >= 1)
@@ -993,7 +1009,7 @@ function Linus(gui) {
             vertexShader :  this.addVaryingsToShader(i,
                     this.addCustomAttributesToShader(i,
                         this.addMercatorModesToShader(i,
-                            this.addUniformsToShader(i, this.vertexShaderLines))))
+                            this.addUniformsToShader(i, this.vertexShaderLine()))))
             });
     },
 
@@ -1011,9 +1027,9 @@ function Linus(gui) {
                     this.addColorModesToShader(i,
                         this.addUniformsToShader(i, this.fragmentShader)), 4)),
             vertexShader :  this.addVaryingsToShader(i,
-                    this.addCustomAttributesToShader(i,
-                        this.addMercatorModesToShader(i,
-                            this.addUniformsToShader(i,this.vertexShaderTriangle))))
+                this.addCustomAttributesToShader(i, 
+                    this.addMercatorModesToShader(i,
+                        this.addUniformsToShader(i,this.vertexShaderTriangle()))))
             });
     },
 
@@ -1768,7 +1784,7 @@ function Linus(gui) {
             
             if(p.numStates > 1)
             {
-                this.gui.addFloat(setId.toString()+'__Defocus state', 0, p.numStates - 1, 0,       function(val) {this.material.uniforms.defocusState.value = val}.bind(p))
+                this.gui.addFloat(setId.toString()+'__Defocus state', 0, p.numStates - 1, Math.min(0.5, p.numStates - 1),       function(val) {this.material.uniforms.defocusState.value = val}.bind(p))
             }
             this.gui.addHeadline("Mercator projections")
             this.gui.addFloat(setId.toString()+'_mercator__Level', 0, 1, 0, function(val) {this.material.uniforms.mercator.value = val;this.updateInsetLabels();}.bind(p))
@@ -2456,10 +2472,11 @@ function Linus(gui) {
     
     
 
-    this.vertexShaderLines = `
+    this.vertexShader = `
     #genericUniforms#
     #genericVaryings#
     #genericAttributes#
+    #customVars#
 
     attribute float setId;
     attribute float drawIndex;
@@ -2517,8 +2534,11 @@ function Linus(gui) {
     {
         vSetId = setId;
         vDrawIndex = drawIndex;
+        // Define the state (for selected data), then calculate a position
         float stateInternal = drawIndex >= 0. ? state : defocusState;
         #genericAttributeInterpolation#
+
+        // Now some checks whether this item is selected or not
         vDiscardThis = 0.;
         vHideThis = 0.;
         if(positionOut.z < zLower || positionOut.z > zUpper || 
@@ -2530,11 +2550,22 @@ function Linus(gui) {
 
         vec3 projPlaneNn = normalize(projPlaneN);
         vec3 planeTest = positionOut.xyz - projPlane;
-        if(dot(planeTest, projPlaneNn) >= 0.)
+        bool isAbovePlane = dot(planeTest, projPlaneNn) >= 0.;
+        if(isAbovePlane)
         {
             vHideThis = 1.;
         }
-        else if(projLevel > 0.001)
+
+        // In case this element is hidden, change the state accordingly and 
+        // re-assign all elements that depend on the state
+        if(vHideThis > 0.5)
+        {
+            stateInternal = defocusState;
+        #genericAttributeInterpolation#
+        }
+        
+
+        if(!isAbovePlane && projLevel > 0.001)
         {
             float dist = length(planeTest) * dot(normalize(planeTest), projPlaneNn);
             positionOut.xyz -= projPlaneNn * dist * projLevel;
@@ -2592,167 +2623,38 @@ function Linus(gui) {
         {
             // Assume camera is more distant, but just zoomed in. Leads to better shading,
             // as if coming from a very far light source, like the sun
-            vView = normalize(vPosition - 1000. * cameraPosition);
-            vec3 biNormal = normalize(cross(vView, vOrientation));
-            vNormal = cross( biNormal, vOrientation );
-            vNormal *= sign( dot( vNormal, vec3( 0.0, 0.0, 1.0 ) ) );
-            vNormal *= sign( dot( vNormal, vView ) );
-            vNormal *= -1.;
+            #customNormal#
         }
 
         if(darkenInside > 0.)
         {
             vCenter = (projectionMatrix * modelViewMatrix * vec4(0., 0., 0., 1.)).xyz;
         }
-    }`,
+    }`
 
+    this.vertexShaderTriangleVars = "attribute vec3 normalCustom;"
+    this.vertexShaderTriangleNormal = "vNormal = normalCustom;\n" +	
+                                      "vView = normalize(vPosition - 1000. * cameraPosition);\n"
+    this.vertexShaderLineVars = ""
+    this.vertexShaderLineNormal = "vView = normalize(vPosition - 1000. * cameraPosition);\n" +
+                                  "vec3 biNormal = normalize(cross(vView, vOrientation));\n" +
+                                  "vNormal = cross( biNormal, vOrientation );\n" +
+                                  "vNormal *= sign( dot( vNormal, vec3( 0.0, 0.0, 1.0 ) ) );\n" +
+                                  "vNormal *= sign( dot( vNormal, vView ) );\n" +
+                                  "vNormal *= -1.;\n" 
 
-
-    this.vertexShaderTriangle = `
-    #genericUniforms#
-    #genericVaryings#
-    #genericAttributes#
-
-    attribute float setId;
-    attribute float drawIndex;
-    attribute vec3 normalCustom;
-
-    varying vec3 vOrientation;
-    varying vec3 vOrientationColor;
-    varying vec3 vPosition;
-    varying vec3 vNextPosition;
-    varying vec3 vNormal;
-    varying vec3 vView;
-    varying vec3 vCenter;
-    varying float vDepth;
-    varying float vSetId;
-    varying float vDrawIndex;
-    varying float vDiscardThis;
-    varying float vHideThis;
-    varying float vLongDiff;
-    varying float vLatDiff;
-    uniform float scale;
-    uniform float state;
-    uniform float defocusState;
-    uniform float shading;
-    uniform float glossiness;
-    uniform float darkenInside;
-    uniform float mercator;
-    uniform int mercatorMode;
-    uniform float mercatorRadius;
-    uniform float mercatorOffset;
-    uniform float mercatorOffset2;
-    uniform float mercatorOffset3;
-    uniform float zLower;
-    uniform float zUpper;
-    uniform float xLower;
-    uniform float xUpper;
-    uniform float yLower;
-    uniform float yUpper;
-    uniform vec3 projPlane;
-    uniform vec3 projPlaneN;
-    uniform float projLevel;
-
-
-    mat4 rotationMatrix(vec3 axis, float angle) 
+    this.vertexShaderLine = function()
     {
-        axis = normalize(axis);
-        float s = sin(angle);
-        float c = cos(angle);
-        float oc = 1.0 - c;
-        
-        return mat4(oc * axis.x * axis.x + c,           oc * axis.x * axis.y - axis.z * s,  oc * axis.z * axis.x + axis.y * s,  0.0,
-                    oc * axis.x * axis.y + axis.z * s,  oc * axis.y * axis.y + c,           oc * axis.y * axis.z - axis.x * s,  0.0,
-                    oc * axis.z * axis.x - axis.y * s,  oc * axis.y * axis.z + axis.x * s,  oc * axis.z * axis.z + c,           0.0,
-                    0.0,                                0.0,                                0.0,                                1.0);
+        return this.vertexShader.replace("#customVars#", this.vertexShaderLineVars).replace(
+                                         "#customNormal#", this.vertexShaderLineNormal);
     }
 
-    void main() 
+    this.vertexShaderTriangle = function()
     {
-        vSetId = setId;
-        vDrawIndex = drawIndex;
-        float stateInternal = drawIndex >= 0. ? state : defocusState;
-        #genericAttributeInterpolation#
-        vDiscardThis = 0.;
-        vHideThis = 0.;
-        if(positionOut.z < zLower || positionOut.z > zUpper || 
-            positionOut.x < xLower || positionOut.x > xUpper || 
-            positionOut.y < yLower || positionOut.y > yUpper )
-        {
-            vHideThis = 1.;
-        }
+        return this.vertexShader.replace("#customVars#", this.vertexShaderTriangleVars).replace(
+                                         "#customNormal#", this.vertexShaderTriangleNormal);
+    }
 
-        vec3 planeTest = positionOut.xyz - projPlane;
-        vec3 projPlaneNn = normalize(projPlaneN);
-        if(dot(planeTest, projPlaneN) >= 0.)
-        {
-            vHideThis = 1.;
-        }
-        else if(projLevel > 0.001)
-        {
-            float dist = length(planeTest) * dot(normalize(planeTest), projPlaneNn);
-            positionOut.xyz -= projPlaneNn * dist * projLevel;
-            
-            planeTest = nextPositionOut.xyz - projPlane;
-            dist = length(planeTest) * dot(normalize(planeTest), projPlaneNn);
-            nextPositionOut.xyz -= projPlaneNn * dist * projLevel;
-        }
-
-        // Always determine lon and lat, since we might need it for coloring
-        float r = length(positionOut.xyz);
-        vec4 v = vec4(positionOut.xyz, 1.) * rotationMatrix(vec3(1,0,0), mercatorOffset)
-            * rotationMatrix(vec3(0,1,0), mercatorOffset2)
-            * rotationMatrix(vec3(0,0,1), mercatorOffset3);
-            
-        float rNext = length(nextPositionOut.xyz);
-        vec4 vNext = vec4(nextPositionOut.xyz, 1.) * rotationMatrix(vec3(1,0,0), mercatorOffset)
-            * rotationMatrix(vec3(0,1,0), mercatorOffset2)
-            * rotationMatrix(vec3(0,0,1), mercatorOffset3);
-            
-        float lat = asin(v.z / r) ;  // z
-        float lon = atan(v.x, v.y);  // y x
-        float latNext = asin(vNext.z / rNext) ;  // z
-        float lonNext = atan(vNext.x, vNext.y);  // y x
-        vLongDiff = lonNext - lon; //lon > 0. ? lon - lonNext : lonNext - lon;
-        vLatDiff = positionOut.y > 0. ? lat - latNext : latNext - lat;
-
-        if(mercator > 0.002)
-        {
-            float mercatorHeight;
-            #mercatorModes#
-
-            if(abs(lon - lonNext) > 1.)
-            {
-                vDiscardThis = 1.;
-            }
-
-            vec3 posMercator = r / 3.142 * vec3(lon, log(tan(3.142 * 0.25 + lat * 0.5)), mercatorHeight * mercatorRadius - mercatorRadius/2.);
-            vec3 nextPosMercator = r / 3.142 * vec3(lonNext, log(tan(3.142 * 0.25 + latNext * 0.5)), mercatorHeight * mercatorRadius - mercatorRadius/2.);
-            positionOut = mix(positionOut, posMercator, mercator);
-            nextPositionOut = mix(nextPositionOut, nextPosMercator, mercator);
-        }
-        vOrientation = normalize(nextPositionOut - positionOut);
-        
-        vec4 modelViewProjection = modelViewMatrix * vec4(positionOut, 1.0 );
-        gl_Position = projectionMatrix * modelViewProjection;
-        vPosition = gl_Position.xyz;
-        vec4 modelViewProjectionNext = modelViewMatrix * vec4(nextPositionOut, 1.0 );
-        vNextPosition = (projectionMatrix * modelViewProjectionNext).xyz;
-        vDepth = clamp((-2.-modelViewProjection.z) / 2., 0., 1.);
-
-        if(shading > 0.01)
-        {
-            vNormal = normalCustom;
-            // Assume camera is more distant, but just zoomed in. Leads to better shading,
-            // as if coming from a very far light source, like the sun
-            vView = normalize(vPosition - 100. * cameraPosition);
-        }
-
-        if(darkenInside > 0.)
-        {
-            vCenter = (projectionMatrix * modelViewMatrix * vec4(0., 0., 0., 1.)).xyz;
-        }
-    }`,
 
     this.fragmentShader = `
     #genericUniforms#
@@ -2823,7 +2725,6 @@ function Linus(gui) {
 
     void main() 
     {
-
         gl_FragColor = vec4(primaryColor, alpha);
 
         if(mode==1)
@@ -2873,7 +2774,11 @@ function Linus(gui) {
             }
         }
 
-        if(vDrawIndex < 0. || vHideThis > 0.001)
+        float hideBecauseFilter = 0.;
+        #attributeFilter#
+
+        // Painting something in defocus color (because it is hidden)
+        if(vDrawIndex < 0. || vHideThis > 0.001 || hideBecauseFilter > 0.001)
         {
             gl_FragColor = vec4(clamp(sim * defocusColor, 0., 1.), defocusAlpha);
         }
@@ -2882,10 +2787,6 @@ function Linus(gui) {
         {
             discard;
         }
-        
-    #attributeFilter#
-
-        // gl_FragColor = vec4(vNormal, 1.); // Debug outputs
     }`
 
 }
