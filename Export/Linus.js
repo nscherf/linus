@@ -1265,7 +1265,6 @@ function Linus(gui) {
         {
             this.updateAnnotationPositions(); 
             requestAnimationFrame(this.animateFrame.bind(this)); // without WEBVR: add this line
-            this.handleVideoFrame();
             this.controls.update();
         }
 
@@ -2373,18 +2372,6 @@ function Linus(gui) {
 
         return dateString;
     }
-    // https://stackoverflow.com/questions/5573096/detecting-webp-support
-    this.canUseWebP = function () {
-        var elem = document.createElement('canvas');
-    
-        if (!!(elem.getContext && elem.getContext('2d'))) {
-            // was able or not to get WebP representation
-            return elem.toDataURL('image/webp').indexOf('data:image/webp') == 0;
-        }
-    
-        // very old browser like IE 8, canvas not supported
-        return false;
-    }
 
     this.screenshot = function() {
         this.disableScreenshotButton();
@@ -2399,45 +2386,86 @@ function Linus(gui) {
     this.video = function() {
         if(this.isVideoRecording)
         {
-            this.stopVideo();
+            this.stopRecording();
         }
         else 
         {
-            this.startVideo();
+            this.startRecording();
         }
     }
-
-    this.startVideo = function() {
-        console.log("Start video");
-        var format = this.canUseWebP() ? "webm" : "png";
-        this.videoCapturer = new CCapture( { format: format, 
-                                             framerate: 30,
-                                             name: 'movie-' + this.getExportFileName(),
-                                             } );
-        this.videoCapturer.start();
-        this.isVideoRecording = true;
+        
+    this.startRecording = function() {
         this.videoTime = Date.now();
-
-    }
-
-    this.stopVideo = function () {
-        this.isVideoRecording = false;
-        this.videoCapturer.stop();
-
-        // default save, will download automatically a file called {name}.extension (webm/gif/tar)
-        this.videoCapturer.save();
-        console.log("Stop video");
-        document.getElementById("videoButton").innerHTML = "&#x25cf;";
-    }
-
-    this.handleVideoFrame = function() {
-        if(this.isVideoRecording)
-        {
-            this.videoCapturer.capture(this.renderer.domElement);
-            var time = parseInt((Date.now() - this.videoTime) / 1000);
-            document.getElementById("videoButton").innerHTML = "&#x25a0; - " + time + "s";
+        this.isVideoRecording = true;
+        let options = {mimeType: 'video/webm'};
+        this.recordedBlobs = [];
+        try {
+            this.mediaRecorder = new MediaRecorder(this.renderer.domElement.captureStream(), options);
+        } catch (e0) {
+            console.log('Unable to create MediaRecorder with options Object: ', e0);
+            try {
+                options = {mimeType: 'video/webm,codecs=vp9'};
+                this.mediaRecorder = new MediaRecorder(this.renderer.domElement.captureStream(), options);
+            } catch (e1) {
+                console.log('Unable to create MediaRecorder with options Object: ', e1);
+                try {
+                    options = 'video/vp8'; // Chrome 47
+                    this.mediaRecorder = new MediaRecorder(this.renderer.domElement.captureStream(), options);
+                } catch (e2) {
+                    alert('MediaRecorder is not supported by this browser.\n\n' +
+                        'Try Firefox 29 or later, or Chrome 47 or later, ' +
+                        'with Enable experimental Web Platform features enabled from chrome://flags.');
+                    console.error('Exception while creating MediaRecorder:', e2);
+                    return;
+                }
+            }
         }
+        console.log('Created MediaRecorder', this.mediaRecorder, 'with options', options);
+
+        this.mediaRecorder.onstop = this.handleStop.bind(this);
+        this.mediaRecorder.ondataavailable = this.handleDataAvailable.bind(this);
+        this.mediaRecorder.start(100); // collect 100ms of data
+        console.log('MediaRecorder started', this.mediaRecorder);
     }
+  
+    this.stopRecording = function() {
+        this.mediaRecorder.stop();
+        
+    }
+
+    this.handleStop = function() {
+        console.log("Stop");
+        this.downloadVideo();
+    }
+
+    this.handleDataAvailable = function () {
+        console.log("Receive video data...");
+        if(event.data && event.data.size > 0) 
+        {
+            this.recordedBlobs.push(event.data);
+        }
+        var time = parseInt((Date.now() - this.videoTime) / 1000);
+        document.getElementById("videoButton").innerHTML = "&#x25a0; - " + time + "s";
+    }
+  
+  
+    this.downloadVideo = function() {
+        const blob = new Blob(this.recordedBlobs, {type: 'video/webm'});
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = 'video-' + this.getExportFileName() + '.webm';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            // When everything is done, change button back
+            document.getElementById("videoButton").innerHTML = '&#x25cf;';
+        }, 100);
+    }
+
 
     // TODO: find a reasonable/acceptable way to download or display the text representing the filtered data
     this.downloadText = function(filename, text) 
