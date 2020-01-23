@@ -81,7 +81,10 @@ function Linus(gui) {
     this.isVideoRecording = false;
     this.videoCapturer = null;
     this.videoTime = 0;
-
+    this.videoBitrate = 50000000
+    this.videoFormat = 'video/webm';
+    this.videoExport = 'video/webm'
+    this.videoFileType = 'webm';
 
     ///////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////// external access: setup and data 
@@ -2397,18 +2400,21 @@ function Linus(gui) {
     this.startRecording = function() {
         this.videoTime = Date.now();
         this.isVideoRecording = true;
-        let options = {mimeType: 'video/webm'};
+        var options = {mimeType: this.videoFormat,
+                       videoBitsPerSecond : this.videoBitrate,};
         this.recordedBlobs = [];
         try {
             this.mediaRecorder = new MediaRecorder(this.renderer.domElement.captureStream(), options);
         } catch (e0) {
             console.log('Unable to create MediaRecorder with options Object: ', e0);
             try {
-                options = {mimeType: 'video/webm,codecs=vp9'};
+                this.videoFormat = 'video/webm,codecs=vp9'
+                options.mimeType = this.videoFormat;
                 this.mediaRecorder = new MediaRecorder(this.renderer.domElement.captureStream(), options);
             } catch (e1) {
                 console.log('Unable to create MediaRecorder with options Object: ', e1);
                 try {
+                    this.videoFormat = 'video/vp8'
                     options = 'video/vp8'; // Chrome 47
                     this.mediaRecorder = new MediaRecorder(this.renderer.domElement.captureStream(), options);
                 } catch (e2) {
@@ -2450,7 +2456,7 @@ function Linus(gui) {
   
   
     this.downloadVideo = function() {
-        const blob = new Blob(this.recordedBlobs, {type: 'video/webm'});
+        const blob = new Blob(this.recordedBlobs, {type: this.videoFormatExport});
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.style.display = 'none';
