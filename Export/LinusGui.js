@@ -121,7 +121,7 @@ function LinusGUI()
             this.values[name] = slider.value
             valueField.value = slider.value
             callback(slider.value)
-            slider.blur() // Leave focus, otherwise selection cannot work
+            //slider.blur() // Leave focus, otherwise selection cannot work
         }.bind(this), false);
 
         this.elementCounter += 1
@@ -165,7 +165,7 @@ function LinusGUI()
         select.addEventListener('change', function () {
             this.values[name] = select.selectedIndex
             callback(select.selectedIndex)
-            select.blur() // Remove focus from select to avoid listening for keys
+            //select.blur() // Remove focus from select to avoid listening for keys
         }.bind(this), false);
         this.elementCounter += 1
     }
@@ -199,7 +199,7 @@ function LinusGUI()
         color.addEventListener('change', function () {
             this.values[name] = color.value
             callback(color.value)
-            color.blur() // Leave focus, otherwise selection cannot work
+            //color.blur() // Leave focus, otherwise selection cannot work
         }.bind(this), false);
         this.elementCounter += 1
     }

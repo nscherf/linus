@@ -77,8 +77,9 @@
             linus.setLOD(url.searchParams.get("lod") ? url.searchParams.get("lod") : 1);
             linus.setVr((url.searchParams.get("vr") !== null));
             
-            // TODO: avoid this (doesn't look to nice)
+            // TODO: avoid this (doesn't look too nice)
             onmousedown = linus.onmousedown.bind(linus);
+            onclick = linus.onmousedown.bind(linus);
             onmousemove = linus.onmousemove.bind(linus);
             onmouseup = linus.onmouseup.bind(linus);
             ondblclick = linus.ondblclick.bind(linus);

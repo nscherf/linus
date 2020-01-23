@@ -1879,6 +1879,8 @@ function Linus(gui) {
             // Never notice this click if it wasn't targeted at the canvas
             return;
         }
+        document.activeElement.blur();
+
         if(this.pressingButton)
         {
             this.clickingMouseButton = true
@@ -2009,9 +2011,12 @@ function Linus(gui) {
     
 
     // Handler of double click: display everything
-    this.ondblclick = function()
+    this.ondblclick = function(e)
     {
-        this.makeAllElementsVisible();
+        if(e.target === this.renderer.domElement)
+        {
+            this.makeAllElementsVisible();
+        }
     },
 
     // Get a plane formed by three points
