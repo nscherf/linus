@@ -1932,11 +1932,18 @@ function Linus(gui) {
             var hh = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
             this.y1 = hh - this.y1;
             this.y2 = hh - this.y2;
-            var fromX = (this.x1 / ww) * 2. - 1.;
-            var fromY = (this.y1 / hh) * 2. - 1.;
-            var toX = (this.x2 / ww) * 2. - 1.;
-            var toY = (this.y2 / hh) * 2. - 1.;
+            var normalizedX1 = (this.x1 / ww) * 2. - 1.;
+            var normalizedY1 = (this.y1 / hh) * 2. - 1.;
+            var normalizedX2 = (this.x2 / ww) * 2. - 1.;
+            var normalizedY2 = (this.y2 / hh) * 2. - 1.;
             
+            var fromX = Math.min(normalizedX1, normalizedX2);
+            var fromY = Math.max(normalizedY1, normalizedY2);
+            var toX   = Math.max(normalizedX1, normalizedX2);
+            var toY   = Math.min(normalizedY1, normalizedY2);
+ 
+            console.log("Selection from", fromX, fromY, "to", toX, toY);
+
             var scale = this.getScale()
             var p1Near = new THREE.Vector3(fromX, fromY, -1 ).unproject( this.camera ).divideScalar(scale);
             var p2Near = new THREE.Vector3(toX,   fromY, -1 ).unproject( this.camera ).divideScalar(scale);
