@@ -517,7 +517,7 @@ input[type=color] {
     padding: 0px;
     position: absolute;
     left: 0px;
-    bottom: 0px;
+    bottom: 4vmin;
     z-index: 100;
 }
 
@@ -532,7 +532,7 @@ input[type=color] {
     padding: 0px;
     position: absolute;
     left: 3vmin;
-    bottom: 1vmin;
+    bottom: 4vmin;
     z-index: 100;
 }
 
@@ -546,6 +546,35 @@ input[type=color] {
 
 #insetLabelBlue {
     color: #0073f9;
+}
+
+#screenshotVideoHolder {
+    display:table;
+    border-collapse:separate;
+    border-spacing:1px;
+    font-size: 20px;
+    left: 3vmin;
+    bottom: 0.5vmin;
+    margin: 0px;
+    padding: 0px;
+    position: absolute;
+}
+
+#screenshotVideoHolder span {
+    display: table-cell;
+    padding: 0;
+    cursor:pointer;
+    min-width: 30px;
+    
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border-radius: 2px;
+    border: 1px solid transparent;
+    text-align: center;
+}
+
+#screenshotVideoHolder span:hover {
+    background: rgba(0, 0, 0, 0.2);
 }
 
 /************************ Slider formatting ************************/

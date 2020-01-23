@@ -78,7 +78,9 @@ function Linus(gui) {
                         0xf032e6, 0xbfef45, 0xfabebe, 0x469990, 0xe6beff, 0x9A6324, 0xfffac8, 
                         0x800000, 0xaaffc3, 0x808000, 0xffd8b1, 0x000075, 0xa9a9a9];
     this.niceColorsCopy = []; // backup
-
+    this.isVideoRecording = false;
+    this.videoCapturer = null;
+    this.videoTime = 0;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -911,7 +913,12 @@ function Linus(gui) {
                 <span id="insetLabelRed">X</span>, 
                 <span id="insetLabelGreen">Y</span>, 
                 <span id="insetLabelBlue">Z</span>
-            </div>`;
+            </div>
+            <div id="screenshotVideoHolder">
+                <span id="screenshotButton">&#128247;</span>
+                <span id="videoButton">&#x25cf;</span>
+            </div>
+                `;
         this.initGl();
 
         this.initGui();
@@ -1258,6 +1265,7 @@ function Linus(gui) {
         {
             this.updateAnnotationPositions(); 
             requestAnimationFrame(this.animateFrame.bind(this)); // without WEBVR: add this line
+            this.handleVideoFrame();
             this.controls.update();
         }
 
@@ -1821,14 +1829,10 @@ function Linus(gui) {
 
         // Default elements for gui
         this.gui.addMainHeadline("Tours and Data Export");
-        var screenshotLinkHolder = document.createElement("div");
-        screenshotLinkHolder.setAttribute("id", "screenshotLinkHolder");
-        var screenshotLink = document.createElement("a");
-        screenshotLink.innerHTML = "&bull; Screenshot";
-        screenshotLink.href = "#"; 
-        screenshotLink.id = "screenshotButton"; 
+        var screenshotLink = document.getElementById("screenshotButton"); 
         screenshotLink.onclick = this.screenshot.bind(this);
-        this.gui.addChild(screenshotLink);
+        var videoLink = document.getElementById("videoButton"); 
+        videoLink.onclick = this.video.bind(this);
 
         var exportLinkHolder = document.createElement("div");
         exportLinkHolder.setAttribute("id", "exportLinkHolder");
@@ -2318,7 +2322,8 @@ function Linus(gui) {
     {
         this.disableExportButton();
         var data = this.exportPrepareData();
-        this.downloadZippedCsv("export.zip", data)
+        var filename = "export" + this.getExportFileName() + ".zip";
+        this.downloadZippedCsv(filename, data);
         
     }
 
@@ -2361,16 +2366,77 @@ function Linus(gui) {
         e.onclick = this.screenshot.bind(this);
     }
 
+    this.getExportFileName = function() {
+        date = new Date();
+        var dateString = date.getFullYear() + "-" + (1+date.getMonth()) + "-" + date.getDate() + "--" +
+            date.getHours() + "-" + ("00" + date.getMinutes()).slice(-2) + "-" + date.getSeconds()
+
+        return dateString;
+    }
+    // https://stackoverflow.com/questions/5573096/detecting-webp-support
+    this.canUseWebP = function () {
+        var elem = document.createElement('canvas');
+    
+        if (!!(elem.getContext && elem.getContext('2d'))) {
+            // was able or not to get WebP representation
+            return elem.toDataURL('image/webp').indexOf('data:image/webp') == 0;
+        }
+    
+        // very old browser like IE 8, canvas not supported
+        return false;
+    }
+
     this.screenshot = function() {
         this.disableScreenshotButton();
         //var dataURL = this.canvas.toDataURL('image/png');
         this.renderer.domElement.toBlob(function(blob){
-            date = new Date();
-            var dateString = date.getFullYear() + "-" + (1+date.getMonth()) + "-" + date.getDate() + ", " +
-                date.getHours() + "-" + ("00" + date.getMinutes()).slice(-2) + "-" + date.getSeconds()
-            saveAs(blob, 'screenshot ' + dateString + '.png');
+            
+            saveAs(blob, 'screenshot-' + this.getExportFileName() + '.png');
             this.enableScreenshotButton();
         }.bind(this), 'image/png');
+    }
+
+    this.video = function() {
+        if(this.isVideoRecording)
+        {
+            this.stopVideo();
+        }
+        else 
+        {
+            this.startVideo();
+        }
+    }
+
+    this.startVideo = function() {
+        console.log("Start video");
+        var format = this.canUseWebP() ? "webm" : "png";
+        this.videoCapturer = new CCapture( { format: format, 
+                                             framerate: 30,
+                                             name: 'movie-' + this.getExportFileName(),
+                                             } );
+        this.videoCapturer.start();
+        this.isVideoRecording = true;
+        this.videoTime = Date.now();
+
+    }
+
+    this.stopVideo = function () {
+        this.isVideoRecording = false;
+        this.videoCapturer.stop();
+
+        // default save, will download automatically a file called {name}.extension (webm/gif/tar)
+        this.videoCapturer.save();
+        console.log("Stop video");
+        document.getElementById("videoButton").innerHTML = "&#x25cf;";
+    }
+
+    this.handleVideoFrame = function() {
+        if(this.isVideoRecording)
+        {
+            this.videoCapturer.capture(this.renderer.domElement);
+            var time = parseInt((Date.now() - this.videoTime) / 1000);
+            document.getElementById("videoButton").innerHTML = "&#x25a0; - " + time + "s";
+        }
     }
 
     // TODO: find a reasonable/acceptable way to download or display the text representing the filtered data
