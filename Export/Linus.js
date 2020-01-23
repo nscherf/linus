@@ -908,7 +908,7 @@ function Linus(gui) {
     // Initialization of THREE.js
     this.init = function()
     {
-        
+        // Add additional elements to the screen
         document.body.innerHTML = document.body.innerHTML + 
             `<div id="selectionBox" hidden></div>
             <div id="inset"></div>
@@ -922,6 +922,12 @@ function Linus(gui) {
                 <span id="videoButton">&#x25cf;</span>
             </div>
                 `;
+
+        var screenshotLink = document.getElementById("screenshotButton"); 
+        screenshotLink.onclick = this.screenshot.bind(this);
+        var videoLink = document.getElementById("videoButton"); 
+        videoLink.onclick = this.video.bind(this);
+
         this.initGl();
 
         this.initGui();
@@ -1831,10 +1837,9 @@ function Linus(gui) {
 
         // Default elements for gui
         this.gui.addMainHeadline("Tours and Data Export");
-        var screenshotLink = document.getElementById("screenshotButton"); 
-        screenshotLink.onclick = this.screenshot.bind(this);
-        var videoLink = document.getElementById("videoButton"); 
-        videoLink.onclick = this.video.bind(this);
+        this.gui.addFloat("Video bitrate (mbit)", 2., 200., parseInt(this.videoBitrate / 1000000), 
+            function(v) {this.videoBitrate = v * 1000000;}.bind(this), false)
+
 
         var exportLinkHolder = document.createElement("div");
         exportLinkHolder.setAttribute("id", "exportLinkHolder");
@@ -2401,7 +2406,8 @@ function Linus(gui) {
         this.videoTime = Date.now();
         this.isVideoRecording = true;
         var options = {mimeType: this.videoFormat,
-                       videoBitsPerSecond : this.videoBitrate,};
+                       videoBitsPerSecond : parseInt(this.videoBitrate),};
+        console.log("options", options)
         this.recordedBlobs = [];
         try {
             this.mediaRecorder = new MediaRecorder(this.renderer.domElement.captureStream(), options);
@@ -2442,6 +2448,7 @@ function Linus(gui) {
     this.handleStop = function() {
         console.log("Stop");
         this.downloadVideo();
+        this.isVideoRecording = false;
     }
 
     this.handleDataAvailable = function () {
