@@ -2594,11 +2594,13 @@ function Linus(gui) {
             case "+z": m.makeRotationZ(d); break;
             case "-z": m.makeRotationZ(-d); break;
         }
-
         this.camera.position.applyMatrix4(m);
         this.camera.up.applyMatrix4(m);
         this.camera.updateProjectionMatrix();
+        this.controls.update();
     },
+
+
 
     // Define the trigger button press
     this.onDocumentKeyDown = function(event) 

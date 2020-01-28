@@ -122,6 +122,16 @@ function LinusTourEditor(linus, gui)
         document.body.appendChild(father)
     }
 
+    this.getCameraUpVector = function() {
+        var pLocal1 = new THREE.Vector3( 0, 0, 0 );
+        var pLocal2 = new THREE.Vector3( 0, 1, 0 );
+        var pWorld1 = pLocal1.applyMatrix4( this.camera.matrixWorld );
+        var pWorld2 = pLocal2.applyMatrix4( this.camera.matrixWorld );
+        var myUp = pWorld2.sub(pWorld1)
+        console.log("Up vector", myUp)
+        return myUp
+    }
+
     /**
      * Converts all elements in the tour editor list into javascript function calls
      */
@@ -281,9 +291,10 @@ function LinusTourEditor(linus, gui)
         x = x == null ? this.camera.position.x : x;
         y = y == null ? this.camera.position.y : y;
         z = z == null ? this.camera.position.z : z;
-        upX = upX == null ? this.camera.up.x : upX;
-        upY = upY == null ? this.camera.up.y : upY;
-        upZ = upZ == null ? this.camera.up.z : upZ;
+        var up = this.getCameraUpVector();
+        upX = upX == null ? up.x : upX;
+        upY = upY == null ? up.y : upY;
+        upZ = upZ == null ? up.z : upZ;
 
         var father = document.getElementById("tourCreatorList")
         var child = document.createElement("li")
