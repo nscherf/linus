@@ -133,12 +133,97 @@ function Linus(gui) {
     ///////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////// Annotation and inset handling 
 
+    this.spriteBackgroundDrawer = function(ctx, wOriginal, hOriginal, rOriginal, upscale) { 
+        var w = wOriginal * upscale
+        var arrowBaseWidth = 20;
+        var wArrowPos = (w-arrowBaseWidth) / 2 
+        var arrowHeight = 30;
+        var h = hOriginal * upscale
+        var r = rOriginal * upscale
+        var x = 0;
+        var y = 0;
+        console.log("Create sprite of size", w, h);
+        ctx.beginPath(); 
+        ctx.moveTo(x + r, y); 
+        ctx.lineTo(x + w - r, y); 
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r); 
+        ctx.lineTo(x + w, y + h - r); 
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h); 
+        
+        ctx.lineTo(x + wArrowPos, y + h); 
+        ctx.lineTo(x + w/2, y + h + arrowHeight); 
+        ctx.lineTo(x + w - wArrowPos, y + h); 
 
+        ctx.lineTo(x + r, y + h); 
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r); 
+        ctx.lineTo(x, y + r); 
+        ctx.quadraticCurveTo(x, y, x + r, y); 
+        ctx.closePath(); 
+        ctx.fill(); 
+        ctx.stroke(); 
+    }
+
+    this.makeTextSprite = function( message, x, y, z )
+    {
+        var upscale = 2.;
+        var fontface =  "Arial";
+        var fontsize = 18;
+        var backgroundColor = { r:0, g:0, b:0, a:.5 };
+        var textColor = { r:255, g:255, b:255, a:1.0 };
+        var spacing = 10;
+        var heightBuffer = 40; // used for down-pointing arrow
+        var canvas = document.createElement('canvas');
+        var context = canvas.getContext('2d');
+        context.font = parseInt(fontsize) + "px " + fontface;
+        console.log(context.font)
+        var metrics = context.measureText( message );
+        var textWidth = metrics.width;
+        var backgroundWidth = parseInt((textWidth + 2 * spacing))
+        var backgroundHeight = parseInt(fontsize * 1.4 + 2 * spacing)
+        var totalWidth = backgroundWidth; 
+        var totalHeight = backgroundHeight + heightBuffer; 
+        canvas.width = totalWidth * upscale;
+        canvas.height = totalHeight * upscale;
+        console.log("metrics", metrics, canvas)
+
+        context.font = parseInt(fontsize * upscale) + "px " + fontface;
+        context.fillStyle   = "rgba(" + backgroundColor.r + "," + backgroundColor.g + "," + backgroundColor.b + "," + backgroundColor.a + ")";
+        context.strokeStyle = "rgba(0, 0, 0, 0)";
+
+        context.lineWidth = 0;
+        this.spriteBackgroundDrawer(context, backgroundWidth, backgroundHeight, 8, upscale);
+
+        
+        context.fillStyle = "rgba("+textColor.r+", "+textColor.g+", "+textColor.b+", 1.0)";
+        context.fillText( message, spacing * upscale, (fontsize + spacing) * upscale);
+
+        var texture = new THREE.Texture(canvas) 
+        texture.needsUpdate = true;
+
+        var spriteMaterial = new THREE.SpriteMaterial( { 
+            map: texture, 
+            useScreenCoordinates: false,
+            sizeAttenuation: false } );
+        var sprite = new THREE.Sprite( spriteMaterial );
+        var s = this.getScale() * this.data.sets[0].scale;
+        var resize =  0.04
+
+        sprite.scale.set(s * totalWidth * resize, 
+                s * totalHeight * resize, 
+                1.);
+        sprite.position.set(s * x, s * y, s * z);
+        sprite.material.depthTest = false;
+        return sprite;  
+    }
 
     // Name is a unique identifier
     // x, y, z are the 3d positions (which will be projected to the current 2D position on the canvas)
     this.addAnnotation = function(name, x, y, z, text)
     {
+        var sprite = this.makeTextSprite(text, x, y, z);
+        sprite.internalName = name
+        this.scene.add(sprite)
+        /*
         var elem = document.createElement('div');
         var textline = document.createTextNode(text); 
         elem.appendChild(textline);  
@@ -149,11 +234,14 @@ function Linus(gui) {
         object["z"] = z;
         object["name"] = name;
         object["domObject"] = elem;
-        this.annotations.push(object);
         document.body.appendChild(elem);
-
         // Let it fade in by giving it a class with opacity = 1
         elem.className += " annotationBoxVisible";
+        */
+        var object = {}
+        object["name"] = name;
+        this.annotations.push(object);
+
     },
 
     // Removes an annotation from DOM and from our list
@@ -163,14 +251,27 @@ function Linus(gui) {
         {
             if(this.annotations[i].name == name)
             {
+                console.log("Remove from array");
                 // Remove the visiblity-class, leads to fading out slowly
-                this.annotations[i].domObject.classList.remove("annotationBoxVisible")
+                //this.annotations[i].domObject.classList.remove("annotationBoxVisible")
                 // Remove it fully, but just after some seconds, so the fade out has finished at that time
-                setTimeout(function(e){ document.body.removeChild(e); }, 5000, this.annotations[i].domObject); // Any time, but longer than animation from style.css
+                //setTimeout(function(e){ document.body.removeChild(e); }, 5000, this.annotations[i].domObject); // Any time, but longer than animation from style.css
                 // However, this can be removed immediately (doesn't affect the DOM)
                 this.annotations.splice(i,1) 
             }
         }
+
+        for(var i = this.scene.children.length - 1; i > 0; i--)
+        {
+            if(this.scene.children[i].internalName !== undefined)
+            {
+                if(this.scene.children[i].internalName === name)
+                {
+                    this.scene.remove(this.scene.children[i])
+                }
+            }
+        }
+        this.renderer.renderLists.dispose();
     },
 
     // Projects a 3D pos to the current 2D pos on the canvas
@@ -181,26 +282,6 @@ function Linus(gui) {
         pos.applyMatrix4(projScreenMat);
         return { x: (( pos.x + 1 ) * canvas.width / 2 + canvas.offsetLeft) / window.devicePixelRatio,
             y: (( - pos.y + 1) * canvas.height / 2 + canvas.offsetTop ) / window.devicePixelRatio};
-    },
-
-    // Moves the annotations to their correct 2D position (on top of the canvas)
-    this.updateAnnotationPositions = function()
-    {
-        // Note, each set can have a custom scale. However, annotations are not 
-        // set-specific. Usually, all sets share the same scale and usually all
-        // sets are aligned to match the first set. Hence, we copy the scale 
-        // from the first set. (Maybe TODO?)
-        var scale = this.getScale() * this.data.sets[0].scale;
-        for(var i = 0; i < this.annotations.length; i++)
-        {
-            var newPos = this.toScreenXY(new THREE.Vector3(this.annotations[i].x, 
-                                                           this.annotations[i].y, 
-                                                           this.annotations[i].z).multiplyScalar(scale), 
-                                        this.camera, 
-                                        this.renderer.domElement)
-            this.annotations[i].domObject.style.left = (10 + newPos.x) + "px"; // 10 and 20 depend on the size of the box, see style.css
-            this.annotations[i].domObject.style.top = (20 + newPos.y) + "px";
-        }
     },
 
     // Set labels for the axes tool
@@ -388,6 +469,8 @@ function Linus(gui) {
         {
             if(this.dataAttributes[i].name == name && this.dataAttributes[i].dataset == dataset)
             {
+                console.error("This attribute exists twice:", name, "of dataset", dataset)
+
                 return;
             }
         }
@@ -661,7 +744,14 @@ function Linus(gui) {
     this.cleanVarName = function(name)
     {
         // There should be more rules, I guess...
-        return name.replace(/ /g, "");
+        nameCleaned = name.replace(/[^A-Za-z0-9]/g,'');
+
+        if (nameCleaned.match(/^\d/)) {
+            var m = "Error! Attribute " + name + " must start with a non-numeric character."
+            alert(m)
+            throw new Error(m);
+        }
+        return nameCleaned;
     },
 
     // Capitalizes only first word of a string
@@ -1272,7 +1362,6 @@ function Linus(gui) {
     {
         if(!this.webVr) 
         {
-            this.updateAnnotationPositions(); 
             requestAnimationFrame(this.animateFrame.bind(this)); // without WEBVR: add this line
             this.controls.update();
         }
