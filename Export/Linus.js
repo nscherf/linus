@@ -205,11 +205,9 @@ function Linus(gui) {
             useScreenCoordinates: false,
             sizeAttenuation: false } );
         var sprite = new THREE.Sprite( spriteMaterial );
-        var s = this.getScale() * this.data.sets[0].scale;
-        var resize =  0.04
-
-        sprite.scale.set(s * totalWidth * resize, 
-                s * totalHeight * resize, 
+        var s = 0.001
+        sprite.scale.set(s * totalWidth, 
+                s * totalHeight, 
                 1.);
         sprite.position.set(s * x, s * y, s * z);
         sprite.material.depthTest = false;
@@ -223,23 +221,7 @@ function Linus(gui) {
         var sprite = this.makeTextSprite(text, x, y, z);
         sprite.internalName = name
         this.scene.add(sprite)
-        /*
-        var elem = document.createElement('div');
-        var textline = document.createTextNode(text); 
-        elem.appendChild(textline);  
-        elem.className += " annotationBox";
-        var object = {}
-        object["x"] = x;
-        object["y"] = y;
-        object["z"] = z;
-        object["name"] = name;
-        object["domObject"] = elem;
-        document.body.appendChild(elem);
-        // Let it fade in by giving it a class with opacity = 1
-        elem.className += " annotationBoxVisible";
-        */
-        var object = {}
-        object["name"] = name;
+        var object = {"name": name}
         this.annotations.push(object);
 
     },
