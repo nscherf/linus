@@ -1980,6 +1980,7 @@ function Linus(gui) {
     // Handler for mouse motion
     this.onmousemove = function(e) 
     {
+        console.log(this.clickingVrOnCanvas)
         if(this.clickingMouseButton)
         {
             this.x2 = e.clientX;
@@ -1993,7 +1994,6 @@ function Linus(gui) {
             {
                 var diffX = e.clientX - this.lastVrPosX
                 var diffY = e.clientY - this.lastVrPosY
-                console.log("Move object by", diffX, diffY)
 
                 this.scene.children[0].rotation.y += 0.01 * diffX;
                 this.scene.children[0].rotation.x += 0.01 * diffY;
