@@ -213,6 +213,10 @@ li:hover {
 
 }
 
+#guiArea > div:last-child {
+    margin-bottom: 30px;
+}
+
 #guiArea input[type=number] {
     width: 60px;
     height: 15px;

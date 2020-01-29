@@ -101,6 +101,7 @@ function Linus(gui) {
     this.setVr = function(data)
     {
         this.webVr = data;
+        this.backgroundColor = 0x111111;
     },
  
     // Disable or enable anti aliasing
@@ -1601,45 +1602,48 @@ function Linus(gui) {
         this.gui.addMainHeadline("General settings")
         this.gui.addSelection("Gui scale", ["Small", "Medium", "Large"], 1, function(val) {this.gui.scale((val == 0 ? 250 : (val == 1 ? 400 : 600)))}.bind(this), false)
 
-        var cameraLinks = document.createElement("div");
-        var cameraLinksTag = document.createElement("div");
-        cameraLinksTag.innerHTML = "Reset camera";
-        cameraLinksTag.classList.add("guiTag");
-        cameraLinks.appendChild(cameraLinksTag);
-
-        var directions = ["+x", "-x", "+y", "-y", "+z", "-z"]
-        for(var i = 0; i < directions.length; i++)
+        if(!this.webVr)
         {
-            var cameraLink = document.createElement("a");
-            var d = directions[i];
-            cameraLink.href = "#";
-            cameraLink.classList.add("resetCamLink");
-            cameraLink.innerHTML = d;
-            var p = {context: this, d: d};
-            cameraLink.onclick = function() {this.context.setCamera(this.d);}.bind(p);
-            cameraLinks.appendChild(cameraLink);
+            var cameraLinks = document.createElement("div");
+            var cameraLinksTag = document.createElement("div");
+            cameraLinksTag.innerHTML = "Reset camera";
+            cameraLinksTag.classList.add("guiTag");
+            cameraLinks.appendChild(cameraLinksTag);
+
+            var directions = ["+x", "-x", "+y", "-y", "+z", "-z"]
+            for(var i = 0; i < directions.length; i++)
+            {
+                var cameraLink = document.createElement("a");
+                var d = directions[i];
+                cameraLink.href = "#";
+                cameraLink.classList.add("resetCamLink");
+                cameraLink.innerHTML = d;
+                var p = {context: this, d: d};
+                cameraLink.onclick = function() {this.context.setCamera(this.d);}.bind(p);
+                cameraLinks.appendChild(cameraLink);
+            }
+            this.gui.addChild(cameraLinks);
+            
+            var cameraRotateLinks = document.createElement("div");
+            var cameraRotateLinksTag = document.createElement("div");
+            cameraRotateLinksTag.innerHTML = "Rotate camera";
+            cameraRotateLinksTag.classList.add("guiTag");
+            cameraRotateLinks.appendChild(cameraRotateLinksTag);
+            for(var i = 0; i < directions.length; i++)
+            {
+                var cameraLink = document.createElement("a");
+                var d = directions[i];
+                cameraLink.href = "#";
+                cameraLink.classList.add("resetCamLink");
+                cameraLink.innerHTML = d;
+                var p = {context: this, d: d};
+                cameraLink.onclick = function() {this.context.rotateCamera(this.d);}.bind(p);
+                cameraRotateLinks.appendChild(cameraLink);
+            }
+            this.gui.addChild(cameraRotateLinks);
         }
-        this.gui.addChild(cameraLinks);
         
-        var cameraRotateLinks = document.createElement("div");
-        var cameraRotateLinksTag = document.createElement("div");
-        cameraRotateLinksTag.innerHTML = "Rotate camera";
-        cameraRotateLinksTag.classList.add("guiTag");
-        cameraRotateLinks.appendChild(cameraRotateLinksTag);
-        for(var i = 0; i < directions.length; i++)
-        {
-            var cameraLink = document.createElement("a");
-            var d = directions[i];
-            cameraLink.href = "#";
-            cameraLink.classList.add("resetCamLink");
-            cameraLink.innerHTML = d;
-            var p = {context: this, d: d};
-            cameraLink.onclick = function() {this.context.rotateCamera(this.d);}.bind(p);
-            cameraRotateLinks.appendChild(cameraLink);
-        }
-        this.gui.addChild(cameraRotateLinks);
-
-        this.gui.addFloat("Scene scale", 0.1, 5, this.getScale(), function(val) {this.setScale(val)}.bind(this), false)
+        //this.gui.addFloat("Scene scale", 0.1, 5, this.getScale(), function(val) {this.setScale(val)}.bind(this), false)
         
         this.sortFrequency = 0; // this.numGlPrimitives > 100000 ? 0 : 1 // or decide based on number of triangles?
         this.gui.addSelection("Render: Update order", ["When not moving", "Every frame", "every 1s", "every 5s", "Never"],
