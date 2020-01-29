@@ -54,7 +54,7 @@ function LinusTourController(linus, gui)
             var tourLink = document.createElement("a");
             var p = {context: this, id: id};
             tourLink.onclick = function() {this.context.startOrLoadTour(this.id, false);}.bind(p);
-            tourLink.innerHTML = "&bull;  "+id;
+            tourLink.innerHTML = "&bull;  " + id + "<br />";
             tourLink.href = "#";
             tourList.appendChild(tourLink);
             isAnyTourLoaded = true;

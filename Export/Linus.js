@@ -212,7 +212,12 @@ function Linus(gui) {
         sprite.scale.set(s * totalWidth, 
                 s * totalHeight, 
                 1.);
-        sprite.position.set(s * x, s * y, s * z);
+        var dataScale = this.data.sets[0].scale * this.getScale()
+        console.log(dataScale)
+        sprite.position.set(dataScale * x, dataScale* y, dataScale * z);
+        if(this.webVr) {
+            sprite.position.add(this.webVrDisplacement)
+        }
         sprite.material.depthTest = false;
         return sprite;  
     }
@@ -226,7 +231,6 @@ function Linus(gui) {
         this.scene.add(sprite)
         var object = {"name": name}
         this.annotations.push(object);
-
     },
 
     // Removes an annotation from DOM and from our list
@@ -1986,7 +1990,6 @@ function Linus(gui) {
     // Handler for mouse motion
     this.onmousemove = function(e) 
     {
-        console.log(this.clickingVrOnCanvas)
         if(this.clickingMouseButton)
         {
             this.x2 = e.clientX;
@@ -2003,8 +2006,18 @@ function Linus(gui) {
 
                 this.scene.children[0].rotation.y += 0.01 * diffX;
                 this.scene.children[0].rotation.x += 0.01 * diffY;
-                //console.log(
-                
+
+                for(var i = 1; i < this.scene.children.length; i++)
+                {
+                    var m = new THREE.Matrix4();
+                    var n = new THREE.Matrix4();
+                    m.makeRotationY(0.01 * diffX)
+                    n.makeRotationX(0.01 * diffY)
+                    this.scene.children[i].position.sub(this.webVrDisplacement)
+                    this.scene.children[i].position.applyMatrix4(m).applyMatrix4(n)
+                    this.scene.children[i].position.add(this.webVrDisplacement)
+
+                }
             }
 
             this.lastVrPosX = e.clientX

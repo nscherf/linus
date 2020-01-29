@@ -5,7 +5,7 @@
         <meta charset="utf-8">
         <meta http-equiv="origin-trial" content="Ai1/G787sugfmWtk1xQExa8N6OqwDsJyNn+OwpA1J4PozR1lixRYIQ4Tmp00vrGWS8FQQ2iDyqjwaewrOfYvPAUAAABTeyJvcmlnaW4iOiJodHRwczovL3RocmVlanMub3JnOjQ0MyIsImZlYXR1cmUiOiJXZWJYUkRldmljZU03NiIsImV4cGlyeSI6MTU2ODAyMzQ3OH0=">
         <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-        <link href="layout/style.css?14" rel="stylesheet" type="text/css"> <!-- "?x" is used to force new download -->
+        <link href="layout/style.css?15" rel="stylesheet" type="text/css"> <!-- "?x" is used to force new download -->
 
         <script src="includes/pako.js"></script>
         <script src="includes/build/three.js"></script>
@@ -68,7 +68,7 @@
 
             // Decide whether to load by a HTTP request or as simple "include"
             if(window.location.protocol.includes("http")) {
-                var dataUrl = new URL("/data/data.json", url);
+                var dataUrl = url.toString().substring(0, url.toString().lastIndexOf("/")) + "/data/data.json";
                 handleLoadingFromServer(dataUrl)
             }
             else 
@@ -108,7 +108,7 @@
             }
 
             function roundMegaBytes(val) {
-                return parseInt(val / 1024 / 1024)
+                return Math.ceil(val / 1024 / 1024)
             }
 
             function handleProgress(current, max) {
@@ -186,11 +186,11 @@
             function addMoreTours(tours) {
                 console.log("Check for additional tours")
                 /*--------------- INCLUDE CODE FOR TOURS AFTER THIS ---------------*/
-                    // Uncomment the next three lines and paste the URL (within "") to the next line
-                    // var generatedUrlString = "http://replace.this.url"
-                    // var urlObject = new URL(generatedUrlString)
-                    // tours.addTour("my second tour", urlObject.searchParams.get("tour"));
-                    // ...and more
+                // Uncomment the next three lines and paste the URL (within "") to the next line
+                // var generatedUrlString = "http://replace.this.url"
+                // var urlObject = new URL(generatedUrlString)
+                // tours.addTour("my second tour", urlObject.searchParams.get("tour"));
+                // ...and more
                 /*--------------- INCLUDE CODE FOR TOURS BEFORE THIS ---------------*/
                 return tours;
             }
