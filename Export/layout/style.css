@@ -10,12 +10,18 @@ a {
 }
 
 .noSelect {
-    -webkit-touch-callout: none; /* iOS Safari */
-    -webkit-user-select: none; /* Safari */
-    -khtml-user-select: none; /* Konqueror HTML */
-        -moz-user-select: none; /* Firefox */
-        -ms-user-select: none; /* Internet Explorer/Edge */
-            user-select: none; /* Non-prefixed version, currently
+    -webkit-touch-callout: none;
+    /* iOS Safari */
+    -webkit-user-select: none;
+    /* Safari */
+    -khtml-user-select: none;
+    /* Konqueror HTML */
+    -moz-user-select: none;
+    /* Firefox */
+    -ms-user-select: none;
+    /* Internet Explorer/Edge */
+    user-select: none;
+    /* Non-prefixed version, currently
                                 supported by Chrome and Opera */
 }
 
@@ -72,19 +78,20 @@ li:hover {
 
 .tourElement::before {
     position: absolute;
-    margin-left: 176px; /* width plus margin plus border*/
+    margin-left: 176px;
+    /* width plus margin plus border*/
     margin-top: 50px;
     content: "▶\00FE0E";
-    color: rgba(0,0,0,0.2);
-  }
+    color: rgba(0, 0, 0, 0.2);
+}
 
 .tourElement:hover {
     border: 1px solid rgba(255, 255, 255, 0.4);
-
 }
 
 .tourChange {
-    background-color: #0073f9aa;0073f9aa
+    background-color: #0073f9aa;
+    0073f9aa
 }
 
 .tourCamera {
@@ -110,6 +117,7 @@ li:hover {
 .tourItemDisabled {
     opacity: 0.5;
 }
+
 .tourItemCheckbox {
     display: inline-block;
     width: 12px;
@@ -119,32 +127,24 @@ li:hover {
     background-color: rgba(255, 255, 255, 0.5);
     vertical-align: top;
 }
+
 .tourItemDisabled .tourItemCheckbox {
     background-color: transparent
-
 }
 
-.tourItemDurationHeadline, .tourItemDelayHeadline
-{
+.tourItemDurationHeadline, .tourItemDelayHeadline {
     display: inline-block;
     width: 70px;
 }
 
-.tourItemValueHeadline
-{
+.tourItemValueHeadline {
     display: inline-block;
     width: 50px;
 }
 
-.tourItemMarkerX, .tourItemMarkerY, .tourItemMarkerZ, 
-.tourItemCameraX, .tourItemCameraY, .tourItemCameraZ,
-.tourItemCameraUpX, .tourItemCameraUpY, .tourItemCameraUpZ
-{
+.tourItemMarkerX, .tourItemMarkerY, .tourItemMarkerZ, .tourItemCameraX, .tourItemCameraY, .tourItemCameraZ, .tourItemCameraUpX, .tourItemCameraUpY, .tourItemCameraUpZ {
     width: 30px;
 }
-
-
-
 
 #tourCreator button {
     cursor: pointer;
@@ -210,22 +210,22 @@ li:hover {
     backdrop-filter: blur(25px);
     transition: width 1s, opacity 0.5s, backdrop-filter 0.5s;
     z-index: 100;
-
 }
 
-#guiArea > div:last-child {
+#guiArea>div:last-child {
     margin-bottom: 30px;
 }
 
 #guiArea input[type=number] {
     width: 60px;
     height: 15px;
-    font-size:11px;
+    font-size: 11px;
     margin: 2px;
     background: transparent;
     border: 0px;
     color: #ffffff;
 }
+
 .guiAreaRestricted {
     opacity: 0;
     pointer-events: none;
@@ -248,11 +248,11 @@ li:hover {
     border: 1px solid white;
     width: 30px;
     height: 30px;
-    position:absolute;
-    top:10px;
-    right:20px;
+    position: absolute;
+    top: 10px;
+    right: 20px;
     cursor: pointer !important;
-    z-index:100;
+    z-index: 100;
     transition: opacity 0.3s;
 }
 
@@ -261,19 +261,7 @@ li:hover {
 }
 
 .crossed {
-    background: 
-    linear-gradient(to top left,
-        rgba(255,255,255,0) 0%,
-        rgba(255,255,255,0) calc(50% - 0.8px),
-        rgba(255,255,255,1) 50%,
-        rgba(255,255,255,0) calc(50% + 0.8px),
-        rgba(255,255,255,0) 100%),
-    linear-gradient(to top right,
-        rgba(255,255,255,0) 0%,
-        rgba(255,255,255,0) calc(50% - 0.8px),
-        rgba(255,255,255,1) 50%,
-        rgba(255,255,255,0) calc(50% + 0.8px),
-        rgba(255,255,255,0) 100%);
+    background: linear-gradient(to top left, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0) calc(50% - 0.8px), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0) calc(50% + 0.8px), rgba(255, 255, 255, 0) 100%), linear-gradient(to top right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0) calc(50% - 0.8px), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0) calc(50% + 0.8px), rgba(255, 255, 255, 0) 100%);
 }
 
 .resetCamLink {
@@ -378,6 +366,7 @@ input[type=color] {
 }
 
 /************************ Loading screen and selection marker ************************/
+
 .welcomeBox {
     font-family: Helvetica, sans-serif;
     font-size: 15px;
@@ -386,13 +375,14 @@ input[type=color] {
     color: #555555;
     background-color: white;
     border-radius: 0;
-    margin-top:20%;
-    margin-left:auto;
-    margin-right:auto;
+    margin-top: 20%;
+    margin-left: auto;
+    margin-right: auto;
     transform: translateZ(0);
     padding: 20px;
     text-align: center;
 }
+
 .welcomeBox a {
     font-size: 25px;
     color: black;
@@ -405,6 +395,8 @@ input[type=color] {
 }
 
 #loadingBox {
+    position: relative;
+    color: black;
     width: 100%;
     height: 100%;
     z-index: 999;
@@ -413,49 +405,55 @@ input[type=color] {
     transition: opacity 1s;
 }
 
-#loadingBar {
+
+#loadingBoxInner {
     position: relative;
     width: 400px;
     height: 100px;
-    background-color: #bbb;
+    background-color: white;
     border-radius: 0;
-    margin-top:20%;
-    margin-left:auto;
-    margin-right:auto;
+    margin-top: 20%;
+    margin-left: auto;
+    margin-right: auto;
     transform: translateZ(0);
+}
+
+#loadingBar {
+    position: relative;
+    height: 23px;
+    width: 90%;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 #loadingBarInner {
-    background-color: white;
     position: absolute;
-    left: 0;
+    width: 0%;
+    background: #bbbbbb;
+    height: 100%;
+}
+
+#loadingBarInnerStatus {
+    position: absolute;
     width: 100%;
     height: 100%;
-    border-radius: 0;
-    transform: translateZ(0);
-    /* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#2599bc+0,73c5d6+67,2099c9+99 */
-    /* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#2599bc+0,73c5d6+67,2099c9+99 */
-    /*background: #2599bc;  Old browsers */
-    /*background: -moz-linear-gradient(left,  #2599bc 0%, #73c5d6 67%, #2099c9 99%); 
-    background: -webkit-linear-gradient(left,  #2599bc 0%,#73c5d6 67%,#2099c9 99%); 
-    background: linear-gradient(to right,  #2599bc 0%,#73c5d6 67%,#2099c9 99%); 
-    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#2599bc', endColorstr='#2099c9',GradientType=1 ); */
-}
-
-#loadingBarImage {
-    height: 27px;
-
-}
-
-#loadingBarText {
-    top: 25%;
+    text-align: center;
+    font-size: 20px;
     color: black;
+    font-variant: small-caps;
+}
+
+#loadingImage {
+    height: 27px;
+}
+
+#loadingText {
+    position: relative;
+    color: black;
+    padding: 15px;
     font-family: Helvetica, sans-serif;
     font-size: 30px;
-    position: absolute;
-    left: 0;
     width: 100%;
-    height: 100%;
     text-align: center;
     font-variant: small-caps;
 }
@@ -553,9 +551,9 @@ input[type=color] {
 }
 
 #screenshotVideoHolder {
-    display:table;
-    border-collapse:separate;
-    border-spacing:1px;
+    display: table;
+    border-collapse: separate;
+    border-spacing: 1px;
     font-size: 20px;
     left: 3vmin;
     bottom: 0.5vmin;
@@ -567,9 +565,8 @@ input[type=color] {
 #screenshotVideoHolder span {
     display: table-cell;
     padding: 0;
-    cursor:pointer;
+    cursor: pointer;
     min-width: 30px;
-    
     background: rgba(0, 0, 0, 0.5);
     color: white;
     border-radius: 2px;
@@ -687,4 +684,3 @@ input[type=range]:focus::-ms-fill-upper {
 }
 
 /* END AUTO GENERATED */
-

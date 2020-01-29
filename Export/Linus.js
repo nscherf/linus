@@ -98,16 +98,18 @@ function Linus(gui) {
     },
 
     // Setter for a data file that follows our JSON layout
-    this.setVr = function(data)
+    this.setVr = function(shouldEnable)
     {
-        this.webVr = data;
-        this.backgroundColor = 0x111111;
+        this.webVr = shouldEnable;
+        if(shouldEnable) {
+            this.backgroundColor = 0x111111;
+        }
     },
  
     // Disable or enable anti aliasing
-    this.setAA = function(aa)
+    this.setAA = function(shouldEnable)
     {
-        this.aa = aa;
+        this.aa = shouldEnable;
     },
 
     // Disable or enable user interface

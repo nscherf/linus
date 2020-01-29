@@ -5,6 +5,8 @@
         <meta charset="utf-8">
         <meta http-equiv="origin-trial" content="Ai1/G787sugfmWtk1xQExa8N6OqwDsJyNn+OwpA1J4PozR1lixRYIQ4Tmp00vrGWS8FQQ2iDyqjwaewrOfYvPAUAAABTeyJvcmlnaW4iOiJodHRwczovL3RocmVlanMub3JnOjQ0MyIsImZlYXR1cmUiOiJXZWJYUkRldmljZU03NiIsImV4cGlyeSI6MTU2ODAyMzQ3OH0=">
         <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <link href="layout/style.css?14" rel="stylesheet" type="text/css"> <!-- "?x" is used to force new download -->
+
         <script src="includes/pako.js"></script>
         <script src="includes/build/three.js"></script>
 		<script src="includes/examples/js/controls/OrbitControls.js?2"></script>
@@ -16,8 +18,8 @@
         <script src="includes/jszip.min.js"></script>
         <script src="includes/FileSaver.min.js"></script>
         <script src="includes/qrcode.min.js"></script>
+          
 
-        <link href="layout/style.css?14" rel="stylesheet" type="text/css"> <!-- "?x" is used to force new download -->
         <link rel="apple-touch-icon" sizes="57x57" href="layout/icon/apple-icon-57x57.png">
         <link rel="apple-touch-icon" sizes="60x60" href="layout/icon/apple-icon-60x60.png">
         <link rel="apple-touch-icon" sizes="72x72" href="layout/icon/apple-icon-72x72.png">
@@ -43,73 +45,157 @@
 
         <!-- The loading screen. This item is created first and will be hidden after loading. -->
         <div id="loadingBox">
-            <div id="loadingBar">
-                <div id="loadingBarInner">&nbsp;</div>
-                <div id="loadingBarText"><img id="loadingBarImage" src="layout/loading.gif">  &nbsp;&nbsp;&nbsp; Loading...</div>
-            </div>
+            <div id="loadingBoxInner">
+                <div id="loadingText"><img id="loadingImage" src="layout/loading.gif">  &nbsp;&nbsp;&nbsp; Loading...</div>
+                <div id="loadingBar">
+                    <div id="loadingBarInner">&nbsp;</div>
+                    <div id="loadingBarInnerStatus">&nbsp;</div>
+                </div>
+        </div>
         </div>
 
-        <!-- Include the JSON containing the data. Large file! -->
-        <script>console.time('time to load data');</script>
-        <script src='data/data.json?temp7'></script>
-        <script>console.timeEnd('time to load data');</script>
 
-        <!-- Include the remaining components of the vis tool -->
+
+        <!-- Include the components of the vis tool -->
         <script  src="Linus.js?1"></script>
         <script  src="LinusGui.js?1"></script>
         <script  src="LinusTourController.js?1"></script>
         <script  src="LinusTourEditor.js?1"></script>
         <script>
-
-            // Create a regular GUI (builds HTML GUI)
-            var gui = new LinusGUI();
-            
-            // Create the vis tool, using the GUI
-            var linus = new Linus(gui); 
-
+            // Start the actuall progress
+            console.time('time to load data');
             var url = new URL(window.location.href);
-            
-            // Now set data and parameters. Must be done first in order to prepare geometry etc.
-            linus.setData(data);
-            linus.setAA((url.searchParams.get("aa") !== null));
-            linus.showFps((url.searchParams.get("fps") !== null));
-            linus.disableGUI((url.searchParams.get("nogui") !== null));
-            linus.setLOD(url.searchParams.get("lod") ? url.searchParams.get("lod") : 1);
-            linus.setVr((url.searchParams.get("vr") !== null));
-            
-            // TODO: avoid this (doesn't look too nice)
-            onmousedown = linus.onmousedown.bind(linus);
-            //onclick = linus.onmousedown.bind(linus);
-            onmousemove = linus.onmousemove.bind(linus);
-            onmouseup = linus.onmouseup.bind(linus);
-            ondblclick = linus.ondblclick.bind(linus);
 
-            // Now let the program do everything (prepare geometry etc.)
-            linus.start();
+            // Decide whether to load by a HTTP request or as simple "include"
+            if(window.location.protocol.includes("http")) {
+                var dataUrl = new URL("/data/data.json", url);
+                handleLoadingFromServer(dataUrl)
+            }
+            else 
+            {
+                handleLoadingFromLocal()
+            }
 
-            // The tour module, manipulating GUI and the vis tool (e.g. camera)
-            var tours = new LinusTourController(linus, gui); 
 
-            // Get settings first, then create the controller module
-            if(url.searchParams.get("editor") !== null) tours.showTourEditor();
-            if(url.searchParams.get("tour") !== null) tours.addTour("default tour", url.searchParams.get("tour"));
 
-            /*--------------- INCLUDE CODE FOR TOURS AFTER THIS ---------------*/
-                // Uncomment the next three lines and paste the URL to the next line
-                // var generatedUrlString = "http://replace.this.url"
-                // var urlObject = new URL(generatedUrlString)
-                // tours.addTour("my second tour", urlObject.searchParams.get("tour"));
-                // ...and more
-            /*--------------- INCLUDE CODE FOR TOURS BEFORE THIS ---------------*/
-            tours.create();
+            function handleLoadingFromLocal() {
+                console.log("This script runs locally")
+                var script = document.createElement('script');
+                script.onload = loadEverything;
+                script.src = "data/data.json";
+                document.head.appendChild(script);
+            }
 
-            // If we want to, we can now auto-start a certain tour. E.g. if "&autoStartTour=[tourName]" is in URL
-            if(url.searchParams.get("autoStartTour")!== null) {
-                var tourToStart = url.searchParams.get("autoStartTour");
-                if(tourToStart === "") tourToStart = "default tour";
-                tours.startTour(tourToStart);
+            function handleLoadingFromServer(dataUrl) {
+                console.log("This script runs on a server. Data:", dataUrl)
+                var client = new XMLHttpRequest();
+                client.open('GET', dataUrl);
+                client.onprogress = function(e) {
+                    var current = -1;
+                    var max = 1;
+                    if (e.lengthComputable) 
+                    {
+                        current = e.loaded;
+                        max = e.total;
+                    }
+                    handleProgress(current, max);
+                }
+                client.onload = function() {
+                    console.log(client.responseType)
+                    receiveDataFromServer(client.responseText);
+                }
+                client.send();
+            }
+
+            function roundMegaBytes(val) {
+                return parseInt(val / 1024 / 1024)
+            }
+
+            function handleProgress(current, max) {
+                var percent = (current / max) * 100.;
+                console.log(" Status: ", current, max)
+                document.getElementById("loadingBarInner").style.width = percent + "%";
+                 document.getElementById("loadingBarInnerStatus").innerHTML = current > 0 ? 
+                    roundMegaBytes(current) + "MB of " + roundMegaBytes(max) + "MB" : ""
+                
+            }
+
+            function receiveDataFromServer(receivedData) {
+                var receivedData = receivedData.replace("var data = ", "")
+                if(receivedData.charAt(0) === "{")
+                {
+                    console.log("Non-Zipped")
+                    this.data = JSON.parse(receivedData) // Already
+                }
+                else 
+                {
+                    console.log("Zipped")
+                    this.data = receivedData.slice(1, -1) // Zipped; remove surrounding quotes
+                }
+                loadEverything()
+            }
+
+            function loadEverything() {
+                console.log("Finished loading of script, now processing data")
+                console.timeEnd('time to load data');
+
+                var url = new URL(window.location.href);
+
+                // Create a regular GUI (builds HTML GUI)
+                var gui = new LinusGUI();
+                
+                // Create the vis tool, using the GUI
+                var linus = new Linus(gui); 
+                    
+                // Now set data and parameters. Must be done first in order to prepare geometry etc.
+                linus.setData(data);
+                linus.setAA((url.searchParams.get("aa") !== null));
+                linus.showFps((url.searchParams.get("fps") !== null));
+                linus.disableGUI((url.searchParams.get("nogui") !== null));
+                linus.setLOD(url.searchParams.get("lod") ? url.searchParams.get("lod") : 1);
+                linus.setVr((url.searchParams.get("vr") !== null));
+                
+                // TODO: avoid this (doesn't look too nice)
+                onmousedown = linus.onmousedown.bind(linus);
+                //onclick = linus.onmousedown.bind(linus);
+                onmousemove = linus.onmousemove.bind(linus);
+                onmouseup = linus.onmouseup.bind(linus);
+                ondblclick = linus.ondblclick.bind(linus);
+    
+                // Now let the program do everything (prepare geometry etc.)
+                linus.start();
+    
+                // The tour module, manipulating GUI and the vis tool (e.g. camera)
+                var tours = new LinusTourController(linus, gui); 
+    
+                // Get settings first, then create the controller module
+                if(url.searchParams.get("editor") !== null) tours.showTourEditor();
+                if(url.searchParams.get("tour") !== null) tours.addTour("default tour", url.searchParams.get("tour"));
+    
+                tours = addMoreTours(tours);
+                tours.create();
+    
+                // If we want to, we can now auto-start a certain tour. E.g. if "&autoStartTour=[tourName]" is in URL
+                if(url.searchParams.get("autoStartTour")!== null) {
+                    var tourToStart = url.searchParams.get("autoStartTour");
+                    if(tourToStart === "") tourToStart = "default tour";
+                    tours.startTour(tourToStart);
+                }
+            }
+
+            function addMoreTours(tours) {
+                console.log("Check for additional tours")
+                /*--------------- INCLUDE CODE FOR TOURS AFTER THIS ---------------*/
+                    // Uncomment the next three lines and paste the URL (within "") to the next line
+                    // var generatedUrlString = "http://replace.this.url"
+                    // var urlObject = new URL(generatedUrlString)
+                    // tours.addTour("my second tour", urlObject.searchParams.get("tour"));
+                    // ...and more
+                /*--------------- INCLUDE CODE FOR TOURS BEFORE THIS ---------------*/
+                return tours;
             }
            
+
         </script>
 	</body>
 </html>
