@@ -4,6 +4,9 @@ This tool aims to be a simple option for scientists to visualize their trajector
 
 The tool automatically provides multiple controls, rendering options and filter methods, which enable advanced data exploration. Alternatively, you can take the user by the hand and present pre-defined tours. The tool runs without installation - it can be executed in all modern browsers, even in virtual reality goggles. 
 
+![Overview](readme/overview.png)
+Overview of the visualization: On the right-hand side, the user interface is shown. You can hide it by pressing the x-button in the top right. You can open the tour editor from the user interface - the editor is shown on the left. In the bottom left corner, an axes helper and buttons for screenshots and videos are available.
+
 ## 1. Data processing
 This section explains the first step: converting your data, add custom data attributes, provide visual context. You need python3 with the packages ```numpy``` and ```scipy```. Edge bundling requires ```pyopencl```, the STL loader requires ```numpy-stl```.
 
@@ -65,16 +68,19 @@ The WebGlToolBuilder is the tool that collects all information and creates a sin
 
 ## 2. Data exploration
 The export folder contains all necessary data. It can be shared in any way you wish. For example, you can upload it to a server, or just open the file export/index.html locally. 
+![Overview](readme/gui.png)
+The GUI, side by side.
 
 ### 2.1. The general concept
-On the right side you can see a menu. First, it shows some general settings. This includes the size of the menu and options to (re)set the camera to a certain position. An interesting point here is the "Render order" - this setting defines how frequently the 3D data is sorted. A low frequency leads to visual artifacts (the background appears to be in front of the foreground) and a high frequency leads to bad performance. By default, a trade-off is selected: the data is sorted a moment after whenever the camera positions was changed.
+On the right side you can see a menu. First, it shows some general settings. This includes the size of the menu and options to (re)set the **camera** to a certain position. An interesting point here is **Render: Update order** - this setting defines how frequently the 3D data is sorted. A low frequency leads to visual artifacts (the background appears to be in front of the foreground) and a high frequency leads to bad performance. By default, a trade-off is selected: the data is sorted a moment after whenever the camera positions was changed.
 
 ### 2.2. Dataset-specific settings
-For each dataset, a number of settings are possible. First, the render settings affect the appearance. Colormapping can be set according to all data attributes. Besides that, shading and transparancy are important tools to present the data in an appealing way (note, these settings can be specified separately for "normal" data and for "de-selected" data, in order to visualize highlighted data and background data in parallel).
-Besides that, each dataset can be projected and cut separately. 
+For each dataset, a number of settings are possible. First, **filters** are available for the respective attributes (if attributes were specified). Filters will hide parts of trajectories that do not match the specified criteria. One special setting is the window: if window is > 0, only elements with a value in [min, min + window] are visible.
+The **render** settings affect the appearance. Color mapping can be set according to all data attributes and by additional properties (like orientation). Besides that, shading and transparancy are important tools to present the data in an appealing way (note, these settings can be specified separately for "normal" data and for "de-selected" data, in order to visualize highlighted data and background data in parallel).
+Besides that, each dataset can be projected and cut separately. There are simple cutting planes, the Mercator projection (including preliminary rotations, and mapping of an attribute as the z dimension), and a projection of the data into a plane that is defined by a center position and a normal.
 
 ### 2.3. Selection, data export and tours
-The lower part of the menu shows the button to open the tour editor. Furthermore, if tours are provided, they can be started from here. The overall tour speed can be adjusted, too, which e.g. allows a playback in slow motion. You can select data by holding button [s] and drawing a rectangle on the screen. A double click resets the selection and shows all trajectories.
+The lower part of the menu shows the button to open the tour editor. Furthermore, if tours are provided, they can be started from here. When the tour editor is opened, the tour can be loaded into the editor by clicking the tour link. The overall tour speed can be adjusted, too, which e.g. allows a playback in slow motion. When you select data by holding button [s] and drawing a rectangle on the screen, the selected data can be downloaded as a zip folder (a double click resets the selection and shows all trajectories).
 
 ### 3. The tour editor
 The tour editor is a tool to create a "video" in which several actions happen in a timely scheduled manner. The editor has three main functions:
