@@ -1,16 +1,15 @@
 # Linus -  easy-to-share, interactive 3D figures
+![Header](readme/header.jpg)
 
 This tool aims to be a simple option for scientists to visualize their trajectory datasets. The tool consists of two parts. First, an offline Python script that performs preprocessing of tracks and creates a custom JSON. Second, a "webpage" that loads the JSON and renders the tracks in 3D.
 
 The tool automatically provides multiple controls, rendering options and filter methods, which enable advanced data exploration. Alternatively, you can take the user by the hand and present pre-defined tours. The tool runs without installation - it can be executed in all modern browsers, even in virtual reality goggles. 
 
-![Overview](readme/overview.png)
-Overview of the visualization: On the right-hand side, the user interface is shown. You can hide it by pressing the x-button in the top right. You can open the tour editor from the user interface - the editor is shown on the left. In the bottom left corner, an axes helper and buttons for screenshots and videos are available.
 
-## 1. Data processing
-This section explains the first step: converting your data, add custom data attributes, provide visual context. You need python3 with the packages ```numpy``` and ```scipy```. Edge bundling requires ```pyopencl```, the STL loader requires ```numpy-stl```.
+## 1. Data processing with the Command Line Interface
+This section explains the first step: converting your data, add custom data attributes, provide visual context. You need Python3 with the packages ```numpy``` and ```scipy```. Edge bundling requires ```pyopencl```, the STL loader requires ```numpy-stl```.
 
-You can either use a custom python script to set up your dataset or you can use the command line interface. For a minimum working example (using the command line interface), you just have to provide a trajectory data source:
+You can either use a custom Python script to set up your dataset or you can use the command line interface. For a minimum working example (using the command line interface), you just have to provide a trajectory data source:
 
 ```python
 python3 run.py -csv ./mydata/
@@ -44,45 +43,53 @@ We offer the additional rendering of a background silhouette that can be provide
 
 
 
-### 1.4. Individual setup in python
-As an alternative to the command line interface, you can create your visualization in python. First you should understand the data organization. The idea is to have a dataset containing a certain number of tracks, where each track consists of a number of positions. For simplicity, we resize all tracks to the same number of positions directly after loading. Our tool allows the data to have multiple states. Another state could be a transformed version of the data, as for example the edge-bundled version. Additional states must have exactly the same layout like the original data - the same number of tracks, the same order, the same number of positions. While exploring the visualization, you will be able to fade dynamically between the states. Furthermore, the data can be enriched with attributes. These could be signals (measurements) or any other numeric values. The attributes form the foundation for filtering and colormapping.
+## 2. Alternative data processing: Using a  Python script
+As an alternative to the command line interface, you can create your visualization in Python script. First you should understand the data organization. The idea is to have a dataset containing a certain number of tracks, where each track consists of a number of positions. For simplicity, we resize all tracks to the same number of positions directly after loading. Our tool allows the data to have multiple states. Another state could be a transformed version of the data, as for example the edge-bundled version. Additional states must have exactly the same layout like the original data - the same number of tracks, the same order, the same number of positions. While exploring the visualization, you will be able to fade dynamically between the states. Furthermore, the data can be enriched with attributes. These could be signals (measurements) or any other numeric values. The attributes form the foundation for filtering and colormapping.
 
-Our tool offers several python classes that help you to create the visualization. The next subsection explain their purpose. However, a good way to start is to have a look at the ```run.py``` file.
+Our tool offers several Python classes that help you to create the visualization. The next subsection explain their purpose. However, a good way to start is to have a look at the ```run.py``` file.
 
 
-#### 1.4.1. Loader classes
+### 2.1. Loader classes
 Use one of the loaders to load the trajectory data. Here you should define the resampling rate, the minimum track size, and individual parameters depending on the concrete loader class (e.g. specify the CSV separator for the CSV loader). The results are three collections:
 - tracks, which is a 5D numpy array of positions, shape: (track, position, x, y, z)
 - attributes, which is a 2D+ numpy array of attribute values, shape: (track, position(, attribute 1(, attribute 2(, ...))))
-- attribute names, which is a python list of names, like: ["Radius", "Time", "Signal", ...]
+- attribute names, which is a Python list of names, like: ["Radius", "Time", "Signal", ...]
 
-#### 1.4.2. Track modifier
+### 2.2. Track modifier
 The track modifier is a class to alter the loaded data. This includes adding new attributes and new states, or to translate/scale the data. Be careful, if you also use triangle data, you may also need to transform the triangles as well (otherwise trajectories and triangles might be scaled differently).
 
-#### 1.4.3. Triangle loader
+### 2.3. Triangle loader
 A tool to load the triangle data. Note, if you have resized the trajectories, you should resize the triangles in the same way (otherwise they'll have different scale). You have to copy the scale/center of the track modifier and set it to the triangle loader.
 
-#### 1.4.4. Builder
+### 2.4. Builder
 The WebGlToolBuilder is the tool that collects all information and creates a single JSON file from it. In this class you can add multiple datasets. The order in which you add the datasets is important: multiple datasets are always rendered _after_ each other. This means, the second dataset will be painted just over the first one. Hence, they cannot partially overlap!
 
 
-## 2. Data exploration
+## 3. Data exploration
 The export folder contains all necessary data. It can be shared in any way you wish. For example, you can upload it to a server, or just open the file export/index.html locally. 
-![Overview](readme/gui.png)
+
+![Overview](readme/overview.jpg)
+Overview of the visualization: On the right-hand side, the user interface is shown. You can hide it by pressing the x-button in the top right. You can open the tour editor from the user interface - the editor is shown on the left. In the bottom left corner, an axes helper and buttons for screenshots and videos are available.
+
+![GUI](readme/gui.jpg)
 The GUI, side by side.
 
-### 2.1. The general concept
+
+### 3.1. The general concept
 On the right side you can see a menu. First, it shows some general settings. This includes the size of the menu and options to (re)set the **camera** to a certain position. An interesting point here is **Render: Update order** - this setting defines how frequently the 3D data is sorted. A low frequency leads to visual artifacts (the background appears to be in front of the foreground) and a high frequency leads to bad performance. By default, a trade-off is selected: the data is sorted a moment after whenever the camera positions was changed.
 
-### 2.2. Dataset-specific settings
+### 3.2. Dataset-specific settings
 For each dataset, a number of settings are possible. First, **filters** are available for the respective attributes (if attributes were specified). Filters will hide parts of trajectories that do not match the specified criteria. One special setting is the window: if window is > 0, only elements with a value in [min, min + window] are visible.
 The **render** settings affect the appearance. Color mapping can be set according to all data attributes and by additional properties (like orientation). Besides that, shading and transparancy are important tools to present the data in an appealing way (note, these settings can be specified separately for "normal" data and for "de-selected" data, in order to visualize highlighted data and background data in parallel).
 Besides that, each dataset can be projected and cut separately. There are simple cutting planes, the Mercator projection (including preliminary rotations, and mapping of an attribute as the z dimension), and a projection of the data into a plane that is defined by a center position and a normal.
 
-### 2.3. Selection, data export and tours
+### 3.3. Selection, data export and tours
 The lower part of the menu shows the button to open the tour editor. Furthermore, if tours are provided, they can be started from here. When the tour editor is opened, the tour can be loaded into the editor by clicking the tour link. The overall tour speed can be adjusted, too, which e.g. allows a playback in slow motion. When you select data by holding button [s] and drawing a rectangle on the screen, the selected data can be downloaded as a zip folder (a double click resets the selection and shows all trajectories).
 
-### 3. The tour editor
+### 3.4. Virtual Reality
+There are major differences between the non-VR version and the VR view. Camera motion is not calculated in the traditional way, but the head motion works as camera. For that reason, tours cannot change the camera in VR mode. Another related aspect is the positioning of the data. Whereas the data is normally centered at the origin (0/0/0), the VR camera position is usually at around 0/0/1.6 (that is considered to be a height of 1,60m), which requires you to move the data until it is in front of your eyes. For that reason, in VR mode you have additional settings to place the scene properly in front of you. 
+
+## 4. The tour editor
 The tour editor is a tool to create a "video" in which several actions happen in a timely scheduled manner. The editor has three main functions:
 - it can set the camera to a certain position
 - it can set any of the settings in the menu to a certain value
@@ -94,22 +101,26 @@ We recommend to open two tabs: one for defining the tour, another one for the re
 
 Note, text overlays and camera settings do not work in VR (there are no camera movements possible since the head is the camera!).
 
-#### 3.1. Recording a tour
+
+![Tour editor](readme/tourEditor.jpg)
+Tour editor with several items.
+
+### 4.1. Recording a tour
 The tour elements are added in a straight forward way: Adjust the camera to your needs and press the button "Get camera". Adjust the settings to your need and press the button "Get settings". Select data with [s] + mouse and press "Use selection". Add markers by clicking the respective button.
 
-#### 3.2. Adjust the timing, remove elements
+### 4.2. Adjust the timing, remove elements
 You can define a delay for each element. A delay of 0 means that the action is executed immediately after the previous action has finished. Some actions have a duration. E.g. the text labels show up for a certain time period. 
 You can change the order of the tour elements by drag&drop on the top left corner (three dashes).
 You can disable elements by un-checking the box next to the drag-button.
 
-#### 3.3. Sharing the tour
+### 4.3. Sharing the tour
 Click into the text box to retrieve the tour code. If the tour code is short enough (depending on the server settings, e.g. less than 1000 characters), you can directly share the URL (by URL or by QR Code) with other people. The tour is encoded in this URL. Note, the URL grows massively with the use of selections. If you only use "get settings" and "get camera", the tour URL is shortest and thus easiest to share.
 
 If the URL is longer than your server allows, you have to copy it to the source code of the index.html file. Have a look at the respective comments in the lower end of the source code file.
 
 You can choose whether the tour should start automatically or not by (un-)checking the respective checkbox.
 
-#### 3.4. Adjusting a tour
+### 4.4. Adjusting a tour
 You can open the tour editor any time and add an existing tour by clicking the respective button of the tour (then the editor is closed, this button starts the tour; when the editor is open, the very same button loads the tour into the editor). Now you can work on it and finally create a new tour link.
 
 
@@ -121,7 +132,7 @@ Just open the main.html instead of the index.html, or share a link to http://you
 
 ### Structure of JSON (with annotations)
 How does the data look like? First we show an empty example with comments:
-```json
+```
 var data = {  
   "sets": [                 # An array of datasets. E.g. track data + visual context
     {  
@@ -270,7 +281,7 @@ Shared attributes are only read from the first state and also used in the second
 ### No data is shown, JavaScript error console: "multiple attributes with the same name"
 Number of attributes is too high. Try it with less attributes and/or less states and ensure that all attributes that are constant among the states are labeled as shared. Every device should be able to display at least a dataset with two states and three (shared) attributes.
 
-### Why are the nested square brackets( [[ ) in the data?
+### Why are the nested square brackets ( [[ ) in the data?
 Short answer: you can ignore the details and just always use two brackets for all kind of data arrays (positions, normals, attributes, indices,...).
 Long answer: The tool allows further data organization by separate draw calls. This can be of advantage in some situations (e.g. a low degree of overlapping between the geometry items; or a very high number of elements leading to long calculation time for the sorting of the vertices). 
 The data array can contain multiple separate draw calls by splitting the items into chunks that should be rendered at once. The following data arrays would create the same geometry but first in a single draw call, then in two draw calls:
@@ -320,5 +331,5 @@ The tour URL is too long to be encoded as QR Code. You must share the URL direct
 Likely the tour URL is too long. Instead of open the URL directly in the browser, copy it into the main.html. In the lower part of main.html you can see placeholders that you must replaced with the tour URL.
 
 
-### My STL-dataset doesn't work, python error: "too many triangles"
+### My STL-dataset doesn't work, Python error: "too many triangles"
 The numpy STL library seems to have problems with ASCII dataset (we noticed this for data exported from ImageJ). Try to create an STL file as binary type.
