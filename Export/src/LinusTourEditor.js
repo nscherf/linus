@@ -1,6 +1,7 @@
 import { Vector3 } from '../includes/three/three.js'
 import { default as Sortable } from '../includes/sortable.js'
-
+import { default as FileSaver } from '../includes/FileSaver.min.js'
+import { default as Qrious } from '../includes/qrious.js'
 /**
  * Handles the toolbox to create a tour
  */
@@ -27,12 +28,21 @@ export default class LinusTourEditor {
      */
     prepareTourQR() {
         var code = this.createTourCode();
+        console.log(code)
+        var qr = new Qrious({
+            value: code,
+            size: 1000,
+        });
+        FileSaver.saveAs(qr.toDataURL(), 'linus_tour.png');
+
+        /*
         var win = window.open("", "Tour", "toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=850,height=850");
         win.document.body.innerHTML = "<div id='qrcode'>&nbsp;</div>";
         win.document.title = "Tour";
 
         try {
             console.log(QRCode)
+            
             var qrcode = QRCode(win.document.getElementById("qrcode"), {
                 text: code,
                 width: 800,
@@ -46,6 +56,9 @@ export default class LinusTourEditor {
             console.error(error);
             win.document.body.innerHTML = "URL too long. Try to avoid selections or long annotations.";
         }
+        */
+
+
     }
 
     /**

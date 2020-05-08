@@ -4,4 +4,5 @@ Export/.htaccess
 Export/.htpasswd
 Export/_versions/
 Export/data/
+Export/node_modules/
 testcases/

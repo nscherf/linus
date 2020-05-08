@@ -60,18 +60,19 @@ function handleProgress(current, max) {
 
     function receiveDataFromServer(receivedData) {
         var receivedData = receivedData.replace("var data = ", "")
+        var data = null
         if (receivedData.charAt(0) === "{") {
             console.log("Non-Zipped")
-            this.data = JSON.parse(receivedData) // Already
+            data = JSON.parse(receivedData) // Already
         }
         else {
             console.log("Zipped")
-            this.data = receivedData.slice(1, -1) // Zipped; remove surrounding quotes
+            data = receivedData.slice(1, -1) // Zipped; remove surrounding quotes
         }
-        loadEverything()
+        loadEverything(data)
     }
 
-    function loadEverything() {
+    function loadEverything(data) {
         console.log("Finished loading of script, now processing data")
         console.timeEnd('time to load data');
 

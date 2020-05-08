@@ -11,3 +11,7 @@ module.exports = {
     minimize: false
 },
 };
+
+module.rules = [
+    { test: /qrcode/, loader: 'exports-loader?QRCode' }
+  ]

@@ -1115,7 +1115,7 @@ export default class Linus {
         father.name = "father"
 
         // All the static uniforms
-        if (typeof data == "string") {
+        if (typeof this.data == "string") {
             //alert("Data looks zipped. This saves 90% of traffic but takes some seconds extra to unzip.");
             this.data = JSON.parse(Pako.inflate(atob(this.data), { to: 'string' }))
             console.log("Inflating object done")
@@ -1132,7 +1132,7 @@ export default class Linus {
             }
 
             // Prepare the data
-            let objects = this.preprocessData(data, i)
+            let objects = this.preprocessData(this.data, i)
             this.processAttributes(i)
 
             // The material (shaders...) must be created after the data has been analyzed!
