@@ -59838,9 +59838,9 @@ class Linus_Linus {
             //alert("Data looks zipped. This saves 90% of traffic but takes some seconds extra to unzip.");
             this.data = JSON.parse(pako_default.a.inflate(atob(this.data), { to: 'string' }))
             console.log("Inflating object done")
-            console.log(this.data)
         }
-
+        
+        console.log(this.data)
         for (var i = 0; i < this.data.sets.length; i++) {
             // Create basic uniforms. They will be complemented by data-specific uniforms.
             if (this.data.sets[i].type == "triangles") {
@@ -61239,7 +61239,7 @@ else {
 function handleLoadingFromLocal() {
     console.log("This script runs locally")
     var script = document.createElement('script');
-    script.onload = loadEverything;
+    script.onload = function() {loadEverything(data)};
     script.src = "data/data.json";
     document.head.appendChild(script);
 }
@@ -61304,7 +61304,7 @@ function handleProgress(current, max) {
         // Create the vis tool, using the GUI
         var gui = new LinusGUI();
         var linus = new Linus_Linus(gui);
-
+        console.log(data)
         // Now set data and parameters. Must be done first in order to prepare geometry etc.
         linus.setData(data);
         linus.setAA((url.searchParams.get("aa") !== null));

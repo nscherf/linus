@@ -1119,9 +1119,9 @@ export default class Linus {
             //alert("Data looks zipped. This saves 90% of traffic but takes some seconds extra to unzip.");
             this.data = JSON.parse(Pako.inflate(atob(this.data), { to: 'string' }))
             console.log("Inflating object done")
-            console.log(this.data)
         }
-
+        
+        console.log(this.data)
         for (var i = 0; i < this.data.sets.length; i++) {
             // Create basic uniforms. They will be complemented by data-specific uniforms.
             if (this.data.sets[i].type == "triangles") {

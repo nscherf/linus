@@ -19,7 +19,7 @@ else {
 function handleLoadingFromLocal() {
     console.log("This script runs locally")
     var script = document.createElement('script');
-    script.onload = loadEverything;
+    script.onload = function() {loadEverything(data)};
     script.src = "data/data.json";
     document.head.appendChild(script);
 }
@@ -84,7 +84,7 @@ function handleProgress(current, max) {
         // Create the vis tool, using the GUI
         var gui = new LinusGUI();
         var linus = new Linus(gui);
-
+        console.log(data)
         // Now set data and parameters. Must be done first in order to prepare geometry etc.
         linus.setData(data);
         linus.setAA((url.searchParams.get("aa") !== null));
