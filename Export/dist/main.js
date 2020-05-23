@@ -61096,21 +61096,27 @@ class Linus_Linus {
                 console.log("Iterate over data set states ... now state ", j)
                 var state = {}
                 state.name = j + "_" + this.data.sets[i].states[j].name;
+                let indexPos = 0;
+                let lastIndex = -1
                 state.elements = []
                 for (var k = 0; k < this.data.sets[i].entities.length; k++) {
                     var skip = false;
                     var lastEntity = -1;
                     var code = "";
-                    for (var m = 1; m < this.data.sets[i].entities[k].length; m++) {
+                    for (var m = 1; m < this.data.sets[i].indices[k].length; m++) {
+                        let index = this.data.sets[i].indices[k][m]
+                        if(lastIndex == index) continue;
+
                         // If we reach a new entity, check if this entity is part of the 
                         // selection, create the header, export the first line of the data.
                         // (After that, only the second point of each line segment will be
                         // exported, that's why we specifically need to export the first point here)
-                        if (lastEntity !== this.data.sets[i].entities[k][m]) {
+                        if (lastEntity !== this.data.sets[i].entities[k][index]) {
                             counter++;
+                            indexPos -= numIndices; // Always one index pair less than number of items
                             this.exportShowStatus("Converting trajectories", counter, 100)
                             skip = false;
-                            var lineId = i.toString() + "_" + this.data.sets[i].entities[k][m].toString();
+                            var lineId = i.toString() + "_" + this.data.sets[i].entities[k][index].toString();
                             if (selectionMap[lineId] === undefined) {
                                 skip = true;
                             }
@@ -61124,18 +61130,20 @@ class Linus_Linus {
                                     dim)
                                 code += this.getExportLine(this.data.sets[i].states[j],
                                     k,
-                                    this.data.sets[i].indices[k][numIndices * m] - 1,
+                                    index,
+                                    //this.data.sets[i].indices[k][numIndices * m] - 1,
                                     dim)
                             }
+                            
                         }
-                        lastEntity = this.data.sets[i].entities[k][m]
-
-                        if (!skip) {
+                        else if (!skip) {
                             code += this.getExportLine(this.data.sets[i].states[j],
-                                k,
-                                this.data.sets[i].indices[k][numIndices * m],
-                                dim)
+                            k,
+                            index,
+                            dim)
                         }
+                        lastEntity = this.data.sets[i].entities[k][index]
+                        lastIndex = index
                     }
                     if (code !== "")
                         state.elements.push(code)
