@@ -1,4 +1,14 @@
-/******/ (function(modules) { // webpackBootstrap
+(function webpackUniversalModuleDefinition(root, factory) {
+	if(typeof exports === 'object' && typeof module === 'object')
+		module.exports = factory();
+	else if(typeof define === 'function' && define.amd)
+		define([], factory);
+	else if(typeof exports === 'object')
+		exports["linuslib"] = factory();
+	else
+		root["linuslib"] = factory();
+})(this, function() {
+return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
 /******/
@@ -56343,6 +56353,9 @@ process.umask = function() { return 0; };
 // ESM COMPAT FLAG
 __webpack_require__.r(__webpack_exports__);
 
+// EXPORTS
+__webpack_require__.d(__webpack_exports__, "LinusStarter", function() { return /* binding */ LinusStarter_LinusStarter; });
+
 // EXTERNAL MODULE: ./includes/three/three.js
 var three = __webpack_require__(0);
 
@@ -56996,6 +57009,179 @@ var stats_min_default = /*#__PURE__*/__webpack_require__.n(stats_min);
 
 // EXTERNAL MODULE: ./includes/three/WebVR.js
 var WebVR = __webpack_require__(8);
+
+// CONCATENATED MODULE: ./includes/three/VRButton.js
+/**
+ * @author mrdoob / http://mrdoob.com
+ * @author Mugen87 / https://github.com/Mugen87
+ */
+
+var VRButton = {
+
+	createButton: function ( renderer, options ) {
+
+		if ( options ) {
+
+			console.error( 'THREE.VRButton: The "options" parameter has been removed. Please set the reference space type via renderer.xr.setReferenceSpaceType() instead.' );
+
+		}
+
+		function showEnterVR( /*device*/ ) {
+
+			var currentSession = null;
+
+			function onSessionStarted( session ) {
+
+				session.addEventListener( 'end', onSessionEnded );
+
+				renderer.xr.setSession( session );
+				button.textContent = 'EXIT VR';
+
+				currentSession = session;
+
+			}
+
+			function onSessionEnded( /*event*/ ) {
+
+				currentSession.removeEventListener( 'end', onSessionEnded );
+
+				button.textContent = 'ENTER VR';
+
+				currentSession = null;
+
+			}
+
+			//
+
+			button.style.display = '';
+
+			button.style.cursor = 'pointer';
+			button.style.left = 'calc(50% - 50px)';
+			button.style.width = '100px';
+
+			button.textContent = 'ENTER VR';
+
+			button.onmouseenter = function () {
+
+				button.style.opacity = '1.0';
+
+			};
+
+			button.onmouseleave = function () {
+
+				button.style.opacity = '0.5';
+
+			};
+
+			button.onclick = function () {
+
+				if ( currentSession === null ) {
+
+					// WebXR's requestReferenceSpace only works if the corresponding feature
+					// was requested at session creation time. For simplicity, just ask for
+					// the interesting ones as optional features, but be aware that the
+					// requestReferenceSpace call will fail if it turns out to be unavailable.
+					// ('local' is always available for immersive sessions and doesn't need to
+					// be requested separately.)
+
+					var sessionInit = { optionalFeatures: [ 'local-floor', 'bounded-floor' ] };
+					navigator.xr.requestSession( 'immersive-vr', sessionInit ).then( onSessionStarted );
+
+				} else {
+
+					currentSession.end();
+
+				}
+
+			};
+
+		}
+
+		function disableButton() {
+
+			button.style.display = '';
+
+			button.style.cursor = 'auto';
+			button.style.left = 'calc(50% - 75px)';
+			button.style.width = '150px';
+
+			button.onmouseenter = null;
+			button.onmouseleave = null;
+
+			button.onclick = null;
+
+		}
+
+		function showWebXRNotFound() {
+
+			disableButton();
+
+			button.textContent = 'VR NOT SUPPORTED';
+
+		}
+
+		function stylizeElement( element ) {
+
+			element.style.position = 'absolute';
+			element.style.bottom = '20px';
+			element.style.padding = '12px 6px';
+			element.style.border = '1px solid #fff';
+			element.style.borderRadius = '4px';
+			element.style.background = 'rgba(0,0,0,0.1)';
+			element.style.color = '#fff';
+			element.style.font = 'normal 13px sans-serif';
+			element.style.textAlign = 'center';
+			element.style.opacity = '0.5';
+			element.style.outline = 'none';
+			element.style.zIndex = '999';
+
+		}
+
+		if ( 'xr' in navigator ) {
+
+			var button = document.createElement( 'button' );
+			button.style.display = 'none';
+
+			stylizeElement( button );
+
+			navigator.xr.isSessionSupported( 'immersive-vr' ).then( function ( supported ) {
+
+				supported ? showEnterVR() : showWebXRNotFound();
+
+			} );
+
+			return button;
+
+		} else {
+
+			var message = document.createElement( 'a' );
+
+			if ( window.isSecureContext === false ) {
+
+				message.href = document.location.href.replace( /^http:/, 'https:' );
+				message.innerHTML = 'WEBXR NEEDS HTTPS'; // TODO Improve message
+
+			} else {
+
+				message.href = 'https://immersiveweb.dev/';
+				message.innerHTML = 'WEBXR NOT AVAILABLE';
+
+			}
+
+			message.style.left = 'calc(50% - 90px)';
+			message.style.width = '180px';
+			message.style.textDecoration = 'none';
+
+			stylizeElement( message );
+
+			return message;
+
+		}
+
+	}
+
+};
+
 
 // EXTERNAL MODULE: ./includes/pako.js
 var pako = __webpack_require__(5);
@@ -58729,6 +58915,7 @@ void main()
 
 
 
+
 class Linus_Linus {
     constructor(gui) {
         // Script handling annotations. These are text boxes (divs) placed over the WebGL canvas at 2D 
@@ -59819,11 +60006,11 @@ class Linus_Linus {
         */
 
         if (this.webVr) {
-            this.renderer.vr.enabled = true
-            this.vrControls = this.renderer.vr.getController(0);
+            this.renderer.xr.enabled = true
+            this.vrControls = this.renderer.xr.getController(0);
             this.vrControls.addEventListener('selectstart', this.onVrSelectStart.bind(this));
             this.vrControls.addEventListener('selectend', this.onVrSelectEnd.bind(this));
-            document.body.appendChild(WEBVR.createButton(this.renderer));
+            document.body.appendChild( VRButton.createButton(this.renderer) );
             this.controls.enabled = false;
         }
         this.controls.minDistance = 0;
@@ -61217,68 +61404,72 @@ class Linus_Linus {
 
 }
 
-// CONCATENATED MODULE: ./src/start.js
+// CONCATENATED MODULE: ./src/LinusStarter.js
 
 
 
 
 
-// Start the actuall progress
-console.time('time to load data');
-var start_url = new URL(window.location.href);
+class LinusStarter_LinusStarter {
 
-// Decide whether to load by a HTTP request or as simple "include"
-if (window.location.protocol.includes("http")) {
-    var dataUrl = start_url.toString().substring(0, start_url.toString().lastIndexOf("/")) + "/data/data.json";
-    handleLoadingFromServer(dataUrl)
-}
-else {
-    handleLoadingFromLocal()
-}
+    constructor(tourList) {
+        this.tourList = tourList;
+        // Start the actuall progress
+        console.time('time to load data');
+        var url = new URL(window.location.href);
 
-function handleLoadingFromLocal() {
-    console.log("This script runs locally")
-    var script = document.createElement('script');
-    script.onload = function() {loadEverything(data)};
-    script.src = "data/data.json";
-    document.head.appendChild(script);
-}
-console.log("hello");
-
-function handleLoadingFromServer(dataUrl) {
-    console.log("This script runs on a server. Data:", dataUrl)
-    var client = new XMLHttpRequest();
-    client.open('GET', dataUrl);
-    client.onprogress = function (e) {
-        var current = -1;
-        var max = 1;
-        if (e.lengthComputable) {
-            current = e.loaded;
-            max = e.total;
+        // Decide whether to load by a HTTP request or as simple "include"
+        if (window.location.protocol.includes("http")) {
+            var dataUrl = url.toString().substring(0, url.toString().lastIndexOf("/")) + "/data/data.json";
+            this.handleLoadingFromServer(dataUrl)
         }
-        handleProgress(current, max);
+        else {
+            this.handleLoadingFromLocal()
+        }
     }
-    client.onload = function () {
-        console.log(client.responseType)
-        receiveDataFromServer(client.responseText);
+
+    handleLoadingFromLocal() {
+        console.log("This script runs locally")
+        var script = document.createElement('script');
+        script.onload = () => { this.loadEverything(data) };
+        script.src = "data/data.json";
+        document.head.appendChild(script);
     }
-    client.send();
-}
 
-function roundMegaBytes(val) {
-    return Math.ceil(val / 1024 / 1024)
-}
+    handleLoadingFromServer(dataUrl) {
+        console.log("This script runs on a server. Data:", dataUrl)
+        var client = new XMLHttpRequest();
+        client.open('GET', dataUrl);
+        client.onprogress = (e) => {
+            var current = -1;
+            var max = 1;
+            if (e.lengthComputable) {
+                current = e.loaded;
+                max = e.total;
+            }
+            handleProgress(current, max);
+        }
+        client.onload = () => {
+            console.log(client.responseType)
+            this.receiveDataFromServer(client.responseText);
+        }
+        client.send();
+    }
 
-function handleProgress(current, max) {
-    var percent = (current / max) * 100.;
-    console.log(" Status: ", current, max)
-    document.getElementById("loadingBarInner").style.width = percent + "%";
-    document.getElementById("loadingBarInnerStatus").innerHTML = current > 0 ?
-    roundMegaBytes(current) + "MB of " + roundMegaBytes(max) + "MB" : ""
-    
-}
+    roundMegaBytes(val) {
+        return Math.ceil(val / 1024 / 1024)
+    }
 
-    function receiveDataFromServer(receivedData) {
+    handleProgress(current, max) {
+        var percent = (current / max) * 100.;
+        console.log(" Status: ", current, max)
+        document.getElementById("loadingBarInner").style.width = percent + "%";
+        document.getElementById("loadingBarInnerStatus").innerHTML = current > 0 ?
+            this.roundMegaBytes(current) + "MB of " + this.roundMegaBytes(max) + "MB" : ""
+
+    }
+
+    receiveDataFromServer(receivedData) {
         var receivedData = receivedData.replace("var data = ", "")
         var data = null
         if (receivedData.charAt(0) === "{") {
@@ -61289,10 +61480,10 @@ function handleProgress(current, max) {
             console.log("Zipped")
             data = receivedData.slice(1, -1) // Zipped; remove surrounding quotes
         }
-        loadEverything(data)
+        this.loadEverything(data)
     }
 
-    function loadEverything(data) {
+    loadEverything(data) {
         console.log("Finished loading of script, now processing data")
         console.timeEnd('time to load data');
 
@@ -61330,7 +61521,7 @@ function handleProgress(current, max) {
         if (url.searchParams.get("editor") !== null) tours.showTourEditor();
         if (url.searchParams.get("tour") !== null) tours.addTour("default tour", url.searchParams.get("tour"));
 
-        tours = addMoreTours(tours);
+        tours = this.addMoreTours(tours);
         tours.create();
 
         // If we want to, we can now auto-start a certain tour. E.g. if "&autoStartTour=[tourName]" is in URL
@@ -61341,19 +61532,16 @@ function handleProgress(current, max) {
         }
     }
 
-    function addMoreTours(tours) {
-        console.log("Check for additional tours")
-        /*--------------- INCLUDE CODE FOR TOURS AFTER THIS ---------------*/
-        // Uncomment the next three lines and paste the URL (within "") to the next line
-        // var generatedUrlString = "http://replace.this.url"
-        // var urlObject = new URL(generatedUrlString)
-        // tours.addTour("my second tour", urlObject.searchParams.get("tour"));
-        // ...and more
-        /*--------------- INCLUDE CODE FOR TOURS BEFORE THIS ---------------*/
-    
+    addMoreTours(tours) {
+        console.log("Check for additional tours - found", this.tourList.length)
+        for(var i = 0; i < this.tourList.length; i++) {
+            tours.addTour(this.tourList[i].name, this.tourList[i].code)
+        }
+
         return tours;
     }
-
+}
 
 /***/ })
 /******/ ]);
+});

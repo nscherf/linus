@@ -2,6 +2,7 @@ import { WebGLRenderer, BufferAttribute, TextureLoader, Quaternion, Vector3, Tex
 import { TrackballControls } from '../includes/three/TrackballControls.js'
 import { default as Stats } from '../includes/three/stats.min.js'
 import { WebVR } from '../includes/three/WebVR.js'
+import { VRButton } from '../includes/three/VRButton.js'
 import { default as Pako } from '../includes/pako.js'
 import { default as JSZip } from '../includes/jszip.min.js'
 import { default as FileSaver } from '../includes/FileSaver.min.js'
@@ -1100,11 +1101,11 @@ export default class Linus {
         */
 
         if (this.webVr) {
-            this.renderer.vr.enabled = true
-            this.vrControls = this.renderer.vr.getController(0);
+            this.renderer.xr.enabled = true
+            this.vrControls = this.renderer.xr.getController(0);
             this.vrControls.addEventListener('selectstart', this.onVrSelectStart.bind(this));
             this.vrControls.addEventListener('selectend', this.onVrSelectEnd.bind(this));
-            document.body.appendChild(WEBVR.createButton(this.renderer));
+            document.body.appendChild( VRButton.createButton(this.renderer) );
             this.controls.enabled = false;
         }
         this.controls.minDistance = 0;

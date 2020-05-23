@@ -3,62 +3,66 @@ import LinusGUI from './LinusGui.js'
 import LinusTourController from './LinusTourController.js'
 
 
-// Start the actuall progress
-console.time('time to load data');
-var url = new URL(window.location.href);
+export class LinusStarter {
 
-// Decide whether to load by a HTTP request or as simple "include"
-if (window.location.protocol.includes("http")) {
-    var dataUrl = url.toString().substring(0, url.toString().lastIndexOf("/")) + "/data/data.json";
-    handleLoadingFromServer(dataUrl)
-}
-else {
-    handleLoadingFromLocal()
-}
+    constructor(tourList) {
+        this.tourList = tourList;
+        // Start the actuall progress
+        console.time('time to load data');
+        var url = new URL(window.location.href);
 
-function handleLoadingFromLocal() {
-    console.log("This script runs locally")
-    var script = document.createElement('script');
-    script.onload = function() {loadEverything(data)};
-    script.src = "data/data.json";
-    document.head.appendChild(script);
-}
-console.log("hello");
-
-function handleLoadingFromServer(dataUrl) {
-    console.log("This script runs on a server. Data:", dataUrl)
-    var client = new XMLHttpRequest();
-    client.open('GET', dataUrl);
-    client.onprogress = function (e) {
-        var current = -1;
-        var max = 1;
-        if (e.lengthComputable) {
-            current = e.loaded;
-            max = e.total;
+        // Decide whether to load by a HTTP request or as simple "include"
+        if (window.location.protocol.includes("http")) {
+            var dataUrl = url.toString().substring(0, url.toString().lastIndexOf("/")) + "/data/data.json";
+            this.handleLoadingFromServer(dataUrl)
         }
-        handleProgress(current, max);
+        else {
+            this.handleLoadingFromLocal()
+        }
     }
-    client.onload = function () {
-        console.log(client.responseType)
-        receiveDataFromServer(client.responseText);
+
+    handleLoadingFromLocal() {
+        console.log("This script runs locally")
+        var script = document.createElement('script');
+        script.onload = () => { this.loadEverything(data) };
+        script.src = "data/data.json";
+        document.head.appendChild(script);
     }
-    client.send();
-}
 
-function roundMegaBytes(val) {
-    return Math.ceil(val / 1024 / 1024)
-}
+    handleLoadingFromServer(dataUrl) {
+        console.log("This script runs on a server. Data:", dataUrl)
+        var client = new XMLHttpRequest();
+        client.open('GET', dataUrl);
+        client.onprogress = (e) => {
+            var current = -1;
+            var max = 1;
+            if (e.lengthComputable) {
+                current = e.loaded;
+                max = e.total;
+            }
+            handleProgress(current, max);
+        }
+        client.onload = () => {
+            console.log(client.responseType)
+            this.receiveDataFromServer(client.responseText);
+        }
+        client.send();
+    }
 
-function handleProgress(current, max) {
-    var percent = (current / max) * 100.;
-    console.log(" Status: ", current, max)
-    document.getElementById("loadingBarInner").style.width = percent + "%";
-    document.getElementById("loadingBarInnerStatus").innerHTML = current > 0 ?
-    roundMegaBytes(current) + "MB of " + roundMegaBytes(max) + "MB" : ""
-    
-}
+    roundMegaBytes(val) {
+        return Math.ceil(val / 1024 / 1024)
+    }
 
-    function receiveDataFromServer(receivedData) {
+    handleProgress(current, max) {
+        var percent = (current / max) * 100.;
+        console.log(" Status: ", current, max)
+        document.getElementById("loadingBarInner").style.width = percent + "%";
+        document.getElementById("loadingBarInnerStatus").innerHTML = current > 0 ?
+            this.roundMegaBytes(current) + "MB of " + this.roundMegaBytes(max) + "MB" : ""
+
+    }
+
+    receiveDataFromServer(receivedData) {
         var receivedData = receivedData.replace("var data = ", "")
         var data = null
         if (receivedData.charAt(0) === "{") {
@@ -69,10 +73,10 @@ function handleProgress(current, max) {
             console.log("Zipped")
             data = receivedData.slice(1, -1) // Zipped; remove surrounding quotes
         }
-        loadEverything(data)
+        this.loadEverything(data)
     }
 
-    function loadEverything(data) {
+    loadEverything(data) {
         console.log("Finished loading of script, now processing data")
         console.timeEnd('time to load data');
 
@@ -110,7 +114,7 @@ function handleProgress(current, max) {
         if (url.searchParams.get("editor") !== null) tours.showTourEditor();
         if (url.searchParams.get("tour") !== null) tours.addTour("default tour", url.searchParams.get("tour"));
 
-        tours = addMoreTours(tours);
+        tours = this.addMoreTours(tours);
         tours.create();
 
         // If we want to, we can now auto-start a certain tour. E.g. if "&autoStartTour=[tourName]" is in URL
@@ -121,15 +125,12 @@ function handleProgress(current, max) {
         }
     }
 
-    function addMoreTours(tours) {
-        console.log("Check for additional tours")
-        /*--------------- INCLUDE CODE FOR TOURS AFTER THIS ---------------*/
-        // Uncomment the next three lines and paste the URL (within "") to the next line
-        // var generatedUrlString = "http://replace.this.url"
-        // var urlObject = new URL(generatedUrlString)
-        // tours.addTour("my second tour", urlObject.searchParams.get("tour"));
-        // ...and more
-        /*--------------- INCLUDE CODE FOR TOURS BEFORE THIS ---------------*/
-    
+    addMoreTours(tours) {
+        console.log("Check for additional tours - found", this.tourList.length)
+        for(var i = 0; i < this.tourList.length; i++) {
+            tours.addTour(this.tourList[i].name, this.tourList[i].code)
+        }
+
         return tours;
     }
+}

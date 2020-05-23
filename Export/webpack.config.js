@@ -1,11 +1,11 @@
 const path = require('path');
 
 module.exports = {
-  entry: './src/start.js',
+  entry: './src/LinusStarter.js',
   output: {
-    filename: 'main.js',
-    path: path.resolve(__dirname, 'dist'),
-
+    library: 'linuslib',
+    libraryTarget: 'umd',
+    globalObject: 'this',
   },
   optimization: {
     minimize: false

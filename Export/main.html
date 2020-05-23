@@ -63,6 +63,23 @@
         <script type="module" src="LinusGui.js?1"></script>
         <script type="module" src="LinusTourController.js?1"></script>
         <script type="module" src="LinusTourEditor.js?1"></script>-->
-        <script  src="./dist/main.js"></script>
+        <!--<script  src="./dist/main.js"></script>-->
+     
+        <script src="./dist/main.js"></script>
+        <script>
+            console.log("hello");
+            let tourList = [];
+            /*--------------- INCLUDE CODE FOR TOURS AFTER THIS ---------------*/
+            // Uncomment the next three lines and paste the URL (within "") to the next line
+            let generatedUrlString = "http://replace.this.url";
+            let tour = {"name": "This is a tour", "code": generatedUrlString};
+            tourList.push(tour);
+            // var urlObject = new URL(generatedUrlString)
+            // tours.addTour("my second tour", urlObject.searchParams.get("tour"));
+            // ...and more
+            /*--------------- INCLUDE CODE FOR TOURS BEFORE THIS ---------------*/
+
+            let linus = new linuslib.LinusStarter(tourList);
+        </script>
 	</body>
 </html>
