@@ -1,4 +1,4 @@
-import { WebGLRenderer, BufferAttribute, TextureLoader, Quaternion, Vector3, Texture, SpriteMaterial, AxesHelper, Matrix4, WEBGL, AlwaysDepth, DoubleSide, NormalBlending, Object3D, Mesh, LineSegments, Box3, BufferGeometry, Float32BufferAttribute, PerspectiveCamera, Scene, Uniform, Color, ShaderMaterial } from '../includes/three/three.js'
+import { WebGLRenderer, TextureLoader, Quaternion, Vector3, Texture, Sprite, SpriteMaterial, AxesHelper, Matrix4, AlwaysDepth, DoubleSide, NormalBlending, Object3D, Mesh, LineSegments, Box3, BufferGeometry, Float32BufferAttribute, PerspectiveCamera, Scene, Uniform, Color, ShaderMaterial } from '../includes/three/three.js'
 import { TrackballControls } from '../includes/three/TrackballControls.js'
 import { default as Stats } from '../includes/three/stats.min.js'
 import { WebVR } from '../includes/three/WebVR.js'

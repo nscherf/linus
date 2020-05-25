@@ -58115,9 +58115,9 @@ class LinusTourController_LinusTourController {
      */
     create()
     {
-        var editorLinkHolder = document.createElement("div");
+        let editorLinkHolder = document.createElement("div");
         editorLinkHolder.setAttribute("id", "editorLinkHolder");
-        var editorLink = document.createElement("a");
+        let editorLink = document.createElement("a");
         editorLink.innerHTML = "&bull; Open tour editor";
         editorLink.href = "#";
         editorLink.id = "tourEditorButton";
@@ -58125,15 +58125,15 @@ class LinusTourController_LinusTourController {
         this.gui.addChild(editorLink);
 
         this.gui.addFloat("Tour speed", -10, 10, 0, function (val) { this.setTourSpeed(val) }.bind(this), false)
-        var tourList = document.createElement("div");
+        let tourList = document.createElement("div");
         tourList.setAttribute("id", "tourList");
 
-        var isAnyTourLoaded = false;
+        let isAnyTourLoaded = false;
 
-        for (var id in this.tours) {
+        for (let id in this.tours) {
             console.log("Add tour", id)
-            var tourLink = document.createElement("a");
-            var p = { context: this, id: id };
+            let tourLink = document.createElement("a");
+            let p = { context: this, id: id };
             tourLink.onclick = function () { this.context.startOrLoadTour(this.id, false); }.bind(p);
             tourLink.innerHTML = "&bull;  " + id + "<br />";
             tourLink.href = "#";
@@ -58142,7 +58142,7 @@ class LinusTourController_LinusTourController {
         }
 
         if (isAnyTourLoaded) {
-            var editorHeadline = document.createElement("span");
+            let editorHeadline = document.createElement("span");
             editorHeadline.innerHTML = "Start a tour:";
             editorHeadline.id = "tourEditorHeadline";
             this.gui.addChild(editorHeadline);
@@ -58153,7 +58153,7 @@ class LinusTourController_LinusTourController {
 
     changeStartTourHeadline(text)
     {
-        var e = document.getElementById("tourEditorHeadline")
+        let e = document.getElementById("tourEditorHeadline")
         if (e !== null)
             e.innerHTML = text;
     }
@@ -58163,7 +58163,7 @@ class LinusTourController_LinusTourController {
      */
     hideTourEditorLink()
     {
-        var e = document.getElementById("tourEditorButton");
+        let e = document.getElementById("tourEditorButton");
         e.parentElement.removeChild(e);
     }
 
@@ -58209,7 +58209,7 @@ class LinusTourController_LinusTourController {
     resetTourTimer()
     {
         this.timer = 0;
-        var v = this.timerSpeedInput;
+        let v = this.timerSpeedInput;
 
         // Input is a number between -10 and 10.
         // 1 should make it twice as quick
@@ -58258,42 +58258,42 @@ class LinusTourController_LinusTourController {
     startTour(name, repeat = true)
     {
         console.log("Tour", name);
-        var tourString = this.tours[name];
+        let tourString = this.tours[name];
         this.resetTourTimer();
         this.gui.hide();
-        var tourCommands = tourString.split("\n");
-        for (var i = 0; i < tourCommands.length; i++) {
+        let tourCommands = tourString.split("\n");
+        for (let i = 0; i < tourCommands.length; i++) {
             console.log(tourCommands[i]);
-            var c = tourCommands[i].split("~");
-            var delay = parseFloat(c[0]);
-            var action = c[1];
+            let c = tourCommands[i].split("~");
+            let delay = parseFloat(c[0]);
+            let action = c[1];
 
             if (action === "camera") {
-                var coords = c[2].split(",");
-                var x = parseFloat(coords[0]);
-                var y = parseFloat(coords[1]);
-                var z = parseFloat(coords[2]);
-                var upX = parseFloat(coords[3]);
-                var upY = parseFloat(coords[4]);
-                var upZ = parseFloat(coords[5]);
-                var duration = parseFloat(c[3]);
+                let coords = c[2].split(",");
+                let x = parseFloat(coords[0]);
+                let y = parseFloat(coords[1]);
+                let z = parseFloat(coords[2]);
+                let upX = parseFloat(coords[3]);
+                let upY = parseFloat(coords[4]);
+                let upZ = parseFloat(coords[5]);
+                let duration = parseFloat(c[3]);
 
                 this.moveCameraTo(delay, x, y, z, upX, upY, upZ, duration)
             }
             else if (action === "fade") {
-                var setting = c[2];
-                var value = c[3];
-                var duration = parseFloat(c[4]);
+                let setting = c[2];
+                let value = c[3];
+                let duration = parseFloat(c[4]);
                 value = isNaN(value) ? value : parseFloat(value);
                 this.fadeParameter(delay, setting, value, duration)
             }
             else if (action === "marker") {
-                var coords = c[2].split(",");
-                var x = parseFloat(coords[0]);
-                var y = parseFloat(coords[1]);
-                var z = parseFloat(coords[2]);
-                var text = c[3];
-                var duration = parseFloat(c[4]);
+                let coords = c[2].split(",");
+                let x = parseFloat(coords[0]);
+                let y = parseFloat(coords[1]);
+                let z = parseFloat(coords[2]);
+                let text = c[3];
+                let duration = parseFloat(c[4]);
 
                 this.addMarker(delay, x, y, z, text, duration)
             }
@@ -58390,14 +58390,14 @@ class LinusTourController_LinusTourController {
      */
     moveCameraAroundYHelper(p)
     {
-        var fps = 30;
-        var angle = Math.atan(p.context.camera.position.x, p.context.camera.position.z);
-        var radius = Math.sqrt(p.context.camera.position.x * p.context.camera.position.x + p.context.camera.position.z * p.context.camera.position.z);
+        let fps = 30;
+        let angle = Math.atan(p.context.camera.position.x, p.context.camera.position.z);
+        let radius = Math.sqrt(p.context.camera.position.x * p.context.camera.position.x + p.context.camera.position.z * p.context.camera.position.z);
         console.log("Start angle ", angle);
         console.log("Radius, ", radius);
-        var numSteps = p.timespan * fps;
-        var runningAngle = 0;
-        for (var i = 0; i < numSteps; i++) {
+        let numSteps = p.timespan * fps;
+        let runningAngle = 0;
+        for (let i = 0; i < numSteps; i++) {
             runningAngle = angle + i / numSteps * 2. * 3.142;
             let pp = {}
             pp.name = p.name;
@@ -58430,28 +58430,37 @@ class LinusTourController_LinusTourController {
         this.timer += timespan * 1000 * this.timerSpeed;
     }
 
+    ease(i, max) {
+        let ratio = i / max;
+        let a = 2.;
+        let result = max * (Math.pow(ratio, a) / (Math.pow(ratio, a) + Math.pow(1. - ratio, a)))
+        console.log(i, result)
+        return result;
+    }
+
     /**
      * Tour: helper that gets called after the user-specified delay
      */
     moveCameraHelper(p)
     {
-        var fromX = p.context.camera.position.x
-        var fromY = p.context.camera.position.y
-        var fromZ = p.context.camera.position.z
-        var fromUpX = p.context.camera.up.x
-        var fromUpY = p.context.camera.up.y
-        var fromUpZ = p.context.camera.up.z
-        var fps = 30;
-        var numSteps = (fps * p.timespan)
-        var x = (p.x - fromX) / numSteps;
-        var y = (p.y - fromY) / numSteps;
-        var z = (p.z - fromZ) / numSteps;
-        var upX = (p.upX - fromUpX) / numSteps;
-        var upY = (p.upY - fromUpY) / numSteps;
-        var upZ = (p.upZ - fromUpZ) / numSteps;
+        let fromX = p.context.camera.position.x
+        let fromY = p.context.camera.position.y
+        let fromZ = p.context.camera.position.z
+        let fromUpX = p.context.camera.up.x
+        let fromUpY = p.context.camera.up.y
+        let fromUpZ = p.context.camera.up.z
+        let fps = 60;
+        let numSteps = (fps * p.timespan)
+        let x = (p.x - fromX) / numSteps;
+        let y = (p.y - fromY) / numSteps;
+        let z = (p.z - fromZ) / numSteps;
+        let upX = (p.upX - fromUpX) / numSteps;
+        let upY = (p.upY - fromUpY) / numSteps;
+        let upZ = (p.upZ - fromUpZ) / numSteps;
         console.log("Up:", upX, upY, upZ);
 
-        for (var i = 0; i < fps * p.timespan; i++) {
+        for (let ii = 0; ii < Math.max(1, fps * p.timespan); ii++) {
+            let i = this.ease(ii, fps * p.timespan)
             let pp = {}
             pp.name = p.name;
             pp.context = p.context;
@@ -58470,8 +58479,9 @@ class LinusTourController_LinusTourController {
                     p.linus.cameraUpdateCallback = function () { } // Self destruction to allow inputs from elsewhere
                 }.bind(p)
 
-            }, i * (1000. / fps), pp);
+            }, ii * (1000. / fps), pp);
         }
+        /*
         let pp = {}
         pp.name = p.name;
         pp.context = p.context;
@@ -58488,11 +58498,12 @@ class LinusTourController_LinusTourController {
             p.linus.cameraUpdateCallback = function () {
                 p.linus.camera.position.set(p.x, p.y, p.z);
                 p.linus.camera.up.set(p.upX, p.upY, p.upZ);
-                p.linus.camera.lookAt(new three["Vector3"](0, 0, 0));
+                p.linus.camera.lookAt(new Vector3(0, 0, 0));
                 p.linus.cameraUpdateCallback = function () { } // Self destruction to allow inputs from elsewhere
             }.bind(p)
 
         }, p.timespan, pp);
+        */
     }
 
     /**
@@ -58522,16 +58533,16 @@ class LinusTourController_LinusTourController {
      */
     fadeParameterHelper(p)
     {
-        var from = p.gui.getValue(p.name);
+        let from = p.gui.getValue(p.name);
         if (p.gui.types[p.name] == "float") {
             from = parseFloat(from)
         }
-        var fps = 30;
-        var numSteps = Math.max(0, (fps * p.duration))
-        var stepsize = (p.to - from) / numSteps
+        let fps = 30;
+        let numSteps = Math.max(0, (fps * p.duration))
+        let stepsize = (p.to - from) / numSteps
 
         // The next loop should only be executed for fadeable parameters
-        for (var i = 0; i < numSteps; i++) {
+        for (let i = 0; i < numSteps; i++) {
             let pp = {}
             pp.name = p.name;
             pp.gui = p.gui;
@@ -59126,7 +59137,7 @@ class Linus_Linus {
             useScreenCoordinates: false,
             sizeAttenuation: false
         });
-        var sprite = new Sprite(spriteMaterial);
+        var sprite = new three["Sprite"](spriteMaterial);
         var s = 0.001
         sprite.scale.set(s * totalWidth,
             s * totalHeight,
