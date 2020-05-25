@@ -55,7 +55,7 @@ export class LinusStarter {
                 current = e.loaded;
                 max = e.total;
             }
-            handleProgress(current, max);
+            this.handleProgress(current, max);
         }
         client.onload = () => {
             console.log(client.responseType)
