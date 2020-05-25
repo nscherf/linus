@@ -58435,7 +58435,8 @@ class LinusTourController_LinusTourController {
         let fromUpY = p.context.camera.up.y
         let fromUpZ = p.context.camera.up.z
         let fps = 60;
-        let numSteps = (fps * p.timespan)
+        let numSteps = Math.max(1, fps * p.timespan);
+        console.log(numSteps)
         let x = (p.x - fromX) / numSteps;
         let y = (p.y - fromY) / numSteps;
         let z = (p.z - fromZ) / numSteps;
@@ -58445,9 +58446,9 @@ class LinusTourController_LinusTourController {
         console.log("Up:", upX, upY, upZ);
 
         let numberOfRuns = Math.max(1, fps * p.timespan); // at least once
-        
-        for (let ii = 0; ii < numberOfRuns; ii++) {
-            let i = this.ease(ii, fps * p.timespan)
+
+        for (let ii = 1; ii <= numberOfRuns; ii++) {
+            let i = this.ease(ii, numberOfRuns)
             let pp = {}
             pp.name = p.name;
             pp.context = p.context;
@@ -58468,29 +58469,6 @@ class LinusTourController_LinusTourController {
 
             }, ii * (1000. / fps), pp);
         }
-        /*
-        let pp = {}
-        pp.name = p.name;
-        pp.context = p.context;
-        pp.linus = p.linus;
-        pp.value = p.to
-        pp.x = p.x
-        pp.y = p.y
-        pp.z = p.z
-        pp.upX = p.upX
-        pp.upY = p.upY
-        pp.upZ = p.upZ
-        setTimeout(function (p) {
-            //console.log("set cam",p.x - p.context.camera.position.x, p.y - p.context.camera.position.y, p.z - p.context.camera.position.z);
-            p.linus.cameraUpdateCallback = function () {
-                p.linus.camera.position.set(p.x, p.y, p.z);
-                p.linus.camera.up.set(p.upX, p.upY, p.upZ);
-                p.linus.camera.lookAt(new Vector3(0, 0, 0));
-                p.linus.cameraUpdateCallback = function () { } // Self destruction to allow inputs from elsewhere
-            }.bind(p)
-
-        }, p.timespan, pp);
-        */
     }
 
     /**
