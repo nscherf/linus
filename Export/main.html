@@ -57,13 +57,10 @@
             let tourList = [];
             /*--------------- INCLUDE CODE FOR TOURS AFTER THIS ---------------*/
             // Uncomment the next four lines and paste the URL (within "") to the next line
-            let generatedUrlString = "file:///index.html?tour=1%7Ecamera%7E0.930324050683227%2C0.03837399367916695%2C2.3494366981309494%2C-0.007257851339198762%2C0.9998831039004545%2C-0.0134574190813459%7E1%0A1%7Ecamera%7E1.7983715671318652%2C-0.5776144024629304%2C1.6790025341833361%2C0.1375832150655596%2C0.9726310960132967%2C0.18724211598942486%7E1%0A1%7Emarker%7E0%2C0%2C0%7EMy+marker+content%7E1%0A1%7Efade%7E0__Alpha%7E1%7E1%0A1%7Efade%7E0__Shading%7E0.3826%7E1%0A#";
-            var urlObject = new URL(generatedUrlString)
-            let tour = {"name": "This is a tour", "code": urlObject.searchParams.get("tour")};
-            tourList.push(tour);
+            // let generatedUrlString = "tourUrl";
             // var urlObject = new URL(generatedUrlString)
-            // tours.addTour("my second tour", urlObject.searchParams.get("tour"));
-            // ...and more
+            // let tour = {"name": "This is a tour", "code": urlObject.searchParams.get("tour")};
+            // tourList.push(tour);
             /*--------------- INCLUDE CODE FOR TOURS BEFORE THIS ---------------*/
 
             let linus = new linuslib.LinusStarter(tourList);
