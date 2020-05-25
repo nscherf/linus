@@ -1,5 +1,7 @@
 import { Vector3 } from '../includes/three/three.js'
 import LinusTourEditor from './LinusTourEditor.js'
+
+
 /**
  *  Class to adjust the Linus' settings in a timely scheduled
  *  manner. This class must have access to the original Linus
@@ -8,8 +10,8 @@ import LinusTourEditor from './LinusTourEditor.js'
  *           - setting the camera (in the linus object)
  */
 export default class LinusTourController {
-    constructor(linus, gui)
-    {
+
+    constructor(linus, gui) {
         // The items we are working on
         this.linus = linus;
         this.gui = gui;
@@ -34,8 +36,7 @@ export default class LinusTourController {
     /**
      * Add GUI elements of tour module
      */
-    create()
-    {
+    create() {
         let editorLinkHolder = document.createElement("div");
         editorLinkHolder.setAttribute("id", "editorLinkHolder");
         let editorLink = document.createElement("a");
@@ -72,8 +73,10 @@ export default class LinusTourController {
         this.gui.addChild(tourList);
     }
 
-    changeStartTourHeadline(text)
-    {
+    /**
+     * Set headline text for the tour editor area
+     */
+    changeStartTourHeadline(text) {
         let e = document.getElementById("tourEditorHeadline")
         if (e !== null)
             e.innerHTML = text;
@@ -82,8 +85,7 @@ export default class LinusTourController {
     /**
      * Remove (destroy) the tour editor button (forever)
      */
-    hideTourEditorLink()
-    {
+    hideTourEditorLink() {
         let e = document.getElementById("tourEditorButton");
         e.parentElement.removeChild(e);
     }
@@ -91,8 +93,7 @@ export default class LinusTourController {
     /**
      * Opens the editor for a tour
      */
-    showTourEditor()
-    {
+    showTourEditor() {
         if (this.isShowingEditor)
             return;
 
@@ -105,8 +106,7 @@ export default class LinusTourController {
     /**
      * Add a tour. Provide the function name as string.
      */
-    addTour(name, tourString)
-    {
+    addTour(name, tourString) {
         this.tours[name] = tourString;
         if (this.isShowingEditor) {
             this.tourEditor.loadTour(tourString);
@@ -118,8 +118,7 @@ export default class LinusTourController {
      * mean 2, 3, 4 times the speed, values -1, -2, -3 mean 1/2, 1/3, 
      * 1/4 times the speed.
      */
-    setTourSpeed(v)
-    {
+    setTourSpeed(v) {
         this.timerSpeedInput = v;
     }
 
@@ -127,8 +126,7 @@ export default class LinusTourController {
      * Resets the counter for a tour (0 means "now").
      * Always for a new tour, the counter must be set to 0.
      */
-    resetTourTimer()
-    {
+    resetTourTimer() {
         this.timer = 0;
         let v = this.timerSpeedInput;
 
@@ -149,8 +147,7 @@ export default class LinusTourController {
     /**
      * Show the tour menu, e.g. after a tour is done
      */
-    showMenu()
-    {
+    showMenu() {
         setTimeout(function () { this.gui.unhide() }.bind(this), this.timer);
     }
 
@@ -158,8 +155,7 @@ export default class LinusTourController {
      * Starts the tour or opens it in editor, depending on the fact
      * whether editor is open or not
      */
-    startOrLoadTour(name, repeat = true)
-    {
+    startOrLoadTour(name, repeat = true) {
         if (this.isShowingEditor)
             this.tourEditor.loadTour(this.tours[name])
         else
@@ -176,8 +172,7 @@ export default class LinusTourController {
      * 
      * If the tour should be repeated, this function will re-call itself.
      */
-    startTour(name, repeat = true)
-    {
+    startTour(name, repeat = true) {
         console.log("Tour", name);
         let tourString = this.tours[name];
         this.resetTourTimer();
@@ -228,8 +223,7 @@ export default class LinusTourController {
     /**
      * Tour: add marker showing text at 3D position x/y/z (mapped to 2D)
      */
-    addMarker(delay, x, y, z, text, timespan)
-    {
+    addMarker(delay, x, y, z, text, timespan) {
         this.timer += delay * 1000. * this.timerSpeed;
         let p = {}
         p.x = x;
@@ -246,8 +240,7 @@ export default class LinusTourController {
     /**
      * Tour: Remove marker with specific name
      */
-    removeMarker(delay, name)
-    {
+    removeMarker(delay, name) {
         this.timer += delay * 1000. * this.timerSpeed;
         let p = {}
         p.name = name;
@@ -258,8 +251,7 @@ export default class LinusTourController {
     /**
      * Tour: Set a value in the GUI (directly, no transition)
      */
-    setParameter(delay, name, to)
-    {
+    setParameter(delay, name, to) {
         this.timer += delay * 1000 * this.timerSpeed;
         let p = {}
         p["name"] = name;
@@ -272,8 +264,7 @@ export default class LinusTourController {
      * Tour: Select items. The selection map contains the IDs of all items
      * to be shown 
      */
-    setSelection(delay, selectionMap)
-    {
+    setSelection(delay, selectionMap) {
         console.log(selectionMap)
         this.timer += delay * 1000 * this.timerSpeed;
         let p = {}
@@ -285,8 +276,7 @@ export default class LinusTourController {
     /**
      * Tour: Set a value in the GUI (directly, no transition)
      */
-    clearSelection(delay)
-    {
+    clearSelection(delay) {
         this.timer += delay * 1000 * this.timerSpeed;
         let p = {}
         p.context = this.linus
@@ -296,8 +286,7 @@ export default class LinusTourController {
     /**
      * Smoother rotations
      */
-    moveCameraAroundY(delay, timespan)
-    {
+    moveCameraAroundY(delay, timespan) {
         this.timer += delay * 1000 * this.timerSpeed;
         let p = {}
         p.timespan = timespan * this.timerSpeed;
@@ -309,8 +298,7 @@ export default class LinusTourController {
     /**
      * Tour: helper that gets called after the user-specified delay
      */
-    moveCameraAroundYHelper(p)
-    {
+    moveCameraAroundYHelper(p) {
         let fps = 30;
         let angle = Math.atan(p.context.camera.position.x, p.context.camera.position.z);
         let radius = Math.sqrt(p.context.camera.position.x * p.context.camera.position.x + p.context.camera.position.z * p.context.camera.position.z);
@@ -333,8 +321,7 @@ export default class LinusTourController {
     /**
      * Tour: move the camera to x,y,z (linear interpolation) 
      */
-    moveCameraTo(delay, x, y, z, upX, upY, upZ, timespan)
-    {
+    moveCameraTo(delay, x, y, z, upX, upY, upZ, timespan) {
         this.timer += delay * 1000 * this.timerSpeed;
         let p = {}
         p.name = name
@@ -362,8 +349,7 @@ export default class LinusTourController {
     /**
      * Tour: helper that gets called after the user-specified delay
      */
-    moveCameraHelper(p)
-    {
+    moveCameraHelper(p) {
         let fromX = p.context.camera.position.x
         let fromY = p.context.camera.position.y
         let fromZ = p.context.camera.position.z
@@ -380,7 +366,9 @@ export default class LinusTourController {
         let upZ = (p.upZ - fromUpZ) / numSteps;
         console.log("Up:", upX, upY, upZ);
 
-        for (let ii = 0; ii < Math.max(1, fps * p.timespan); ii++) {
+        let numberOfRuns = Math.max(1, fps * p.timespan); // at least once
+        
+        for (let ii = 0; ii < numberOfRuns; ii++) {
             let i = this.ease(ii, fps * p.timespan)
             let pp = {}
             pp.name = p.name;
@@ -430,8 +418,7 @@ export default class LinusTourController {
     /**
      * Tour: Fade a parameter value with the specified speed (change rate per second)
      */
-    fadeParameter(delay, name, to, duration)
-    {
+    fadeParameter(delay, name, to, duration) {
         this.timer += delay * 1000 * this.timerSpeed;
         let p = {}
         p.name = name
@@ -452,8 +439,7 @@ export default class LinusTourController {
     /**
      * Tour: helper that gets called after the user-specified delay
      */
-    fadeParameterHelper(p)
-    {
+    fadeParameterHelper(p) {
         let from = p.gui.getValue(p.name);
         if (p.gui.types[p.name] == "float") {
             from = parseFloat(from)

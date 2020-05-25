@@ -39,12 +39,12 @@ export default class LinusGUI {
      * Creates the GUI container and basic contents
      */
     create(){
-        var guiArea = document.createElement("div");
+        let guiArea = document.createElement("div");
         guiArea.setAttribute("id", "guiArea");
         guiArea.setAttribute("class", "guiArea noSelect");
         document.body.appendChild(guiArea);
 
-        var guiAreaToggle = document.createElement("div");
+        let guiAreaToggle = document.createElement("div");
         guiAreaToggle.setAttribute("id", "guiAreaToggle");
         guiAreaToggle.setAttribute("class", "guiAreaToggle crossed");
         guiAreaToggle.onclick = this.toggle.bind(this);
@@ -57,8 +57,8 @@ export default class LinusGUI {
      */
     addHeadline(value) {
         this.elementGroupCounter += 1
-        var e = document.getElementById("guiArea");
-        var headline = document.createElement("div")
+        let e = document.getElementById("guiArea");
+        let headline = document.createElement("div")
         headline.textContent = value
         headline.setAttribute("class", "guiHeadline")
         headline.setAttribute("id", "guiElemGroup" + this.elementGroupCounter)
@@ -81,20 +81,20 @@ export default class LinusGUI {
     addFloat(name, min, max, value, callback, hide = true) {
         this.elementMap[name] = this.elementCounter;
         this.types[name] = "float"
-        var e = document.getElementById("guiArea");
-        var line = document.createElement("div")
+        let e = document.getElementById("guiArea");
+        let line = document.createElement("div")
         line.setAttribute("class", "guiLine" + (hide ? " hideGuiElement" : ""))
         line.setAttribute("name", "guiElemGroup" + this.elementGroupCounter)
 
-        var tagField = document.createElement("div")
+        let tagField = document.createElement("div")
         tagField.textContent = this.getDisplayName(name)
         tagField.setAttribute("class", "guiTag")
-        var valueField = document.createElement("input")
+        let valueField = document.createElement("input")
         valueField.setAttribute("type", "number")
         valueField.value = value
         valueField.setAttribute("class", "guiValueFloat")
 
-        var slider = document.createElement("input")
+        let slider = document.createElement("input")
         slider.setAttribute("id", "guiElem" + this.elementCounter)
         slider.setAttribute("type", "range")
         slider.setAttribute("min", min)
@@ -131,21 +131,21 @@ export default class LinusGUI {
     addSelection(name, values, selected, callback, hide = true) {
         this.elementMap[name] = this.elementCounter
         this.types[name] = "select"
-        var e = document.getElementById("guiArea");
-        var line = document.createElement("div")
+        let e = document.getElementById("guiArea");
+        let line = document.createElement("div")
         line.setAttribute("class", "guiLine" + (hide ? " hideGuiElement" : ""))
         line.setAttribute("name", "guiElemGroup" + this.elementGroupCounter)
 
-        var tagField = document.createElement("div")
+        let tagField = document.createElement("div")
         tagField.textContent = this.getDisplayName(name)
         tagField.setAttribute("class", "guiTag")
 
-        var select = document.createElement("select")
+        let select = document.createElement("select")
         select.setAttribute("class", "guiSelect")
         select.setAttribute("id", "guiElem" + this.elementCounter)
 
-        for (var i = 0; i < values.length; i++) {
-            var option = document.createElement("option")
+        for (let i = 0; i < values.length; i++) {
+            let option = document.createElement("option")
             option.textContent = values[i]
             if (i == selected) {
                 option.setAttribute("selected", "selected")
@@ -160,7 +160,6 @@ export default class LinusGUI {
         select.addEventListener('change', function() {
             this.values[name] = select.selectedIndex
             callback(select.selectedIndex)
-            //select.blur() // Remove focus from select to avoid listening for keys
         }.bind(this), false);
         this.elementCounter += 1
     }
@@ -171,16 +170,16 @@ export default class LinusGUI {
     addColor(name, value, callback, hide = true) {
         this.elementMap[name] = this.elementCounter
         this.types[name] = "color"
-        var e = document.getElementById("guiArea");
-        var line = document.createElement("div")
+        let e = document.getElementById("guiArea");
+        let line = document.createElement("div")
         line.setAttribute("class", "guiLine" + (hide ? " hideGuiElement" : ""))
         line.setAttribute("name", "guiElemGroup" + this.elementGroupCounter)
 
-        var tagField = document.createElement("div")
+        let tagField = document.createElement("div")
         tagField.textContent = this.getDisplayName(name)
         tagField.setAttribute("class", "guiTag")
 
-        var color = document.createElement("input")
+        let color = document.createElement("input")
         color.setAttribute("class", "guiColor")
         color.setAttribute("id", "guiElem" + this.elementCounter)
         color.setAttribute("value", value)
@@ -202,8 +201,8 @@ export default class LinusGUI {
      * A large headline in the GUI
      */
     addMainHeadline(value) {
-        var e = document.getElementById("guiArea");
-        var headline = document.createElement("div");
+        let e = document.getElementById("guiArea");
+        let headline = document.createElement("div");
         headline.textContent = value;
         headline.setAttribute("class", "guiMainHeadline");
         e.appendChild(headline);
@@ -213,8 +212,8 @@ export default class LinusGUI {
      * Add plain html source as one line into the GUI
      */
     addHtml(content) {
-        var e = document.getElementById("guiArea");
-        var line = document.createElement("div");
+        let e = document.getElementById("guiArea");
+        let line = document.createElement("div");
         line.setAttribute("class", "guiBlock");
         line.innerHTML = content;
         e.appendChild(line);
@@ -224,8 +223,8 @@ export default class LinusGUI {
      * Add DOM element into the GUI
      */
     addChild(e2) {
-        var e = document.getElementById("guiArea");
-        var line = document.createElement("div");
+        let e = document.getElementById("guiArea");
+        let line = document.createElement("div");
         line.setAttribute("class", "guiBlock");
         line.appendChild(e2);
         e.appendChild(line);
@@ -239,7 +238,7 @@ export default class LinusGUI {
      * shown as "min" (= everything after __)
      */
     getDisplayName(name) {
-        var splitted = name.split("__")
+        let splitted = name.split("__")
         if (splitted.length == 2) {
             return splitted[1]
         }
@@ -258,7 +257,7 @@ export default class LinusGUI {
      * Get value of a GUI element
      */
     getValue(name) {
-        var id = "guiElem" + this.elementMap[name]
+        let id = "guiElem" + this.elementMap[name]
         if (this.types[name] == "select") {
             return document.getElementById(id).selectedIndex
         }
@@ -270,7 +269,7 @@ export default class LinusGUI {
      * values to their destination.
      */
     setValue(name, value) {
-        var id = "guiElem" + this.elementMap[name]
+        let id = "guiElem" + this.elementMap[name]
         if (this.types[name] == "select") {
             document.getElementById(id).selectedIndex = value
         }
@@ -281,12 +280,12 @@ export default class LinusGUI {
 
         // Trigger both type of events that we actually use:
         // oninput e.g. for sliders, onchange e.g. for dropdown
-        var eventInput = new Event('input', {
+        let eventInput = new Event('input', {
             'bubbles': true,
             'cancelable': true
         });
 
-        var eventChange = new Event('change');
+        let eventChange = new Event('change');
         document.getElementById(id).dispatchEvent(eventInput);
         document.getElementById(id).dispatchEvent(eventChange);
     }

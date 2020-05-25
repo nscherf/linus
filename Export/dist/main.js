@@ -57237,12 +57237,12 @@ class LinusGUI {
      * Creates the GUI container and basic contents
      */
     create(){
-        var guiArea = document.createElement("div");
+        let guiArea = document.createElement("div");
         guiArea.setAttribute("id", "guiArea");
         guiArea.setAttribute("class", "guiArea noSelect");
         document.body.appendChild(guiArea);
 
-        var guiAreaToggle = document.createElement("div");
+        let guiAreaToggle = document.createElement("div");
         guiAreaToggle.setAttribute("id", "guiAreaToggle");
         guiAreaToggle.setAttribute("class", "guiAreaToggle crossed");
         guiAreaToggle.onclick = this.toggle.bind(this);
@@ -57255,8 +57255,8 @@ class LinusGUI {
      */
     addHeadline(value) {
         this.elementGroupCounter += 1
-        var e = document.getElementById("guiArea");
-        var headline = document.createElement("div")
+        let e = document.getElementById("guiArea");
+        let headline = document.createElement("div")
         headline.textContent = value
         headline.setAttribute("class", "guiHeadline")
         headline.setAttribute("id", "guiElemGroup" + this.elementGroupCounter)
@@ -57279,20 +57279,20 @@ class LinusGUI {
     addFloat(name, min, max, value, callback, hide = true) {
         this.elementMap[name] = this.elementCounter;
         this.types[name] = "float"
-        var e = document.getElementById("guiArea");
-        var line = document.createElement("div")
+        let e = document.getElementById("guiArea");
+        let line = document.createElement("div")
         line.setAttribute("class", "guiLine" + (hide ? " hideGuiElement" : ""))
         line.setAttribute("name", "guiElemGroup" + this.elementGroupCounter)
 
-        var tagField = document.createElement("div")
+        let tagField = document.createElement("div")
         tagField.textContent = this.getDisplayName(name)
         tagField.setAttribute("class", "guiTag")
-        var valueField = document.createElement("input")
+        let valueField = document.createElement("input")
         valueField.setAttribute("type", "number")
         valueField.value = value
         valueField.setAttribute("class", "guiValueFloat")
 
-        var slider = document.createElement("input")
+        let slider = document.createElement("input")
         slider.setAttribute("id", "guiElem" + this.elementCounter)
         slider.setAttribute("type", "range")
         slider.setAttribute("min", min)
@@ -57329,21 +57329,21 @@ class LinusGUI {
     addSelection(name, values, selected, callback, hide = true) {
         this.elementMap[name] = this.elementCounter
         this.types[name] = "select"
-        var e = document.getElementById("guiArea");
-        var line = document.createElement("div")
+        let e = document.getElementById("guiArea");
+        let line = document.createElement("div")
         line.setAttribute("class", "guiLine" + (hide ? " hideGuiElement" : ""))
         line.setAttribute("name", "guiElemGroup" + this.elementGroupCounter)
 
-        var tagField = document.createElement("div")
+        let tagField = document.createElement("div")
         tagField.textContent = this.getDisplayName(name)
         tagField.setAttribute("class", "guiTag")
 
-        var select = document.createElement("select")
+        let select = document.createElement("select")
         select.setAttribute("class", "guiSelect")
         select.setAttribute("id", "guiElem" + this.elementCounter)
 
-        for (var i = 0; i < values.length; i++) {
-            var option = document.createElement("option")
+        for (let i = 0; i < values.length; i++) {
+            let option = document.createElement("option")
             option.textContent = values[i]
             if (i == selected) {
                 option.setAttribute("selected", "selected")
@@ -57358,7 +57358,6 @@ class LinusGUI {
         select.addEventListener('change', function() {
             this.values[name] = select.selectedIndex
             callback(select.selectedIndex)
-            //select.blur() // Remove focus from select to avoid listening for keys
         }.bind(this), false);
         this.elementCounter += 1
     }
@@ -57369,16 +57368,16 @@ class LinusGUI {
     addColor(name, value, callback, hide = true) {
         this.elementMap[name] = this.elementCounter
         this.types[name] = "color"
-        var e = document.getElementById("guiArea");
-        var line = document.createElement("div")
+        let e = document.getElementById("guiArea");
+        let line = document.createElement("div")
         line.setAttribute("class", "guiLine" + (hide ? " hideGuiElement" : ""))
         line.setAttribute("name", "guiElemGroup" + this.elementGroupCounter)
 
-        var tagField = document.createElement("div")
+        let tagField = document.createElement("div")
         tagField.textContent = this.getDisplayName(name)
         tagField.setAttribute("class", "guiTag")
 
-        var color = document.createElement("input")
+        let color = document.createElement("input")
         color.setAttribute("class", "guiColor")
         color.setAttribute("id", "guiElem" + this.elementCounter)
         color.setAttribute("value", value)
@@ -57400,8 +57399,8 @@ class LinusGUI {
      * A large headline in the GUI
      */
     addMainHeadline(value) {
-        var e = document.getElementById("guiArea");
-        var headline = document.createElement("div");
+        let e = document.getElementById("guiArea");
+        let headline = document.createElement("div");
         headline.textContent = value;
         headline.setAttribute("class", "guiMainHeadline");
         e.appendChild(headline);
@@ -57411,8 +57410,8 @@ class LinusGUI {
      * Add plain html source as one line into the GUI
      */
     addHtml(content) {
-        var e = document.getElementById("guiArea");
-        var line = document.createElement("div");
+        let e = document.getElementById("guiArea");
+        let line = document.createElement("div");
         line.setAttribute("class", "guiBlock");
         line.innerHTML = content;
         e.appendChild(line);
@@ -57422,8 +57421,8 @@ class LinusGUI {
      * Add DOM element into the GUI
      */
     addChild(e2) {
-        var e = document.getElementById("guiArea");
-        var line = document.createElement("div");
+        let e = document.getElementById("guiArea");
+        let line = document.createElement("div");
         line.setAttribute("class", "guiBlock");
         line.appendChild(e2);
         e.appendChild(line);
@@ -57437,7 +57436,7 @@ class LinusGUI {
      * shown as "min" (= everything after __)
      */
     getDisplayName(name) {
-        var splitted = name.split("__")
+        let splitted = name.split("__")
         if (splitted.length == 2) {
             return splitted[1]
         }
@@ -57456,7 +57455,7 @@ class LinusGUI {
      * Get value of a GUI element
      */
     getValue(name) {
-        var id = "guiElem" + this.elementMap[name]
+        let id = "guiElem" + this.elementMap[name]
         if (this.types[name] == "select") {
             return document.getElementById(id).selectedIndex
         }
@@ -57468,7 +57467,7 @@ class LinusGUI {
      * values to their destination.
      */
     setValue(name, value) {
-        var id = "guiElem" + this.elementMap[name]
+        let id = "guiElem" + this.elementMap[name]
         if (this.types[name] == "select") {
             document.getElementById(id).selectedIndex = value
         }
@@ -57479,12 +57478,12 @@ class LinusGUI {
 
         // Trigger both type of events that we actually use:
         // oninput e.g. for sliders, onchange e.g. for dropdown
-        var eventInput = new Event('input', {
+        let eventInput = new Event('input', {
             'bubbles': true,
             'cancelable': true
         });
 
-        var eventChange = new Event('change');
+        let eventChange = new Event('change');
         document.getElementById(id).dispatchEvent(eventInput);
         document.getElementById(id).dispatchEvent(eventChange);
     }
@@ -58079,6 +58078,8 @@ class LinusTourEditor_LinusTourEditor {
 // CONCATENATED MODULE: ./src/LinusTourController.js
 
 
+
+
 /**
  *  Class to adjust the Linus' settings in a timely scheduled
  *  manner. This class must have access to the original Linus
@@ -58087,8 +58088,8 @@ class LinusTourEditor_LinusTourEditor {
  *           - setting the camera (in the linus object)
  */
 class LinusTourController_LinusTourController {
-    constructor(linus, gui)
-    {
+
+    constructor(linus, gui) {
         // The items we are working on
         this.linus = linus;
         this.gui = gui;
@@ -58113,8 +58114,7 @@ class LinusTourController_LinusTourController {
     /**
      * Add GUI elements of tour module
      */
-    create()
-    {
+    create() {
         let editorLinkHolder = document.createElement("div");
         editorLinkHolder.setAttribute("id", "editorLinkHolder");
         let editorLink = document.createElement("a");
@@ -58151,8 +58151,10 @@ class LinusTourController_LinusTourController {
         this.gui.addChild(tourList);
     }
 
-    changeStartTourHeadline(text)
-    {
+    /**
+     * Set headline text for the tour editor area
+     */
+    changeStartTourHeadline(text) {
         let e = document.getElementById("tourEditorHeadline")
         if (e !== null)
             e.innerHTML = text;
@@ -58161,8 +58163,7 @@ class LinusTourController_LinusTourController {
     /**
      * Remove (destroy) the tour editor button (forever)
      */
-    hideTourEditorLink()
-    {
+    hideTourEditorLink() {
         let e = document.getElementById("tourEditorButton");
         e.parentElement.removeChild(e);
     }
@@ -58170,8 +58171,7 @@ class LinusTourController_LinusTourController {
     /**
      * Opens the editor for a tour
      */
-    showTourEditor()
-    {
+    showTourEditor() {
         if (this.isShowingEditor)
             return;
 
@@ -58184,8 +58184,7 @@ class LinusTourController_LinusTourController {
     /**
      * Add a tour. Provide the function name as string.
      */
-    addTour(name, tourString)
-    {
+    addTour(name, tourString) {
         this.tours[name] = tourString;
         if (this.isShowingEditor) {
             this.tourEditor.loadTour(tourString);
@@ -58197,8 +58196,7 @@ class LinusTourController_LinusTourController {
      * mean 2, 3, 4 times the speed, values -1, -2, -3 mean 1/2, 1/3, 
      * 1/4 times the speed.
      */
-    setTourSpeed(v)
-    {
+    setTourSpeed(v) {
         this.timerSpeedInput = v;
     }
 
@@ -58206,8 +58204,7 @@ class LinusTourController_LinusTourController {
      * Resets the counter for a tour (0 means "now").
      * Always for a new tour, the counter must be set to 0.
      */
-    resetTourTimer()
-    {
+    resetTourTimer() {
         this.timer = 0;
         let v = this.timerSpeedInput;
 
@@ -58228,8 +58225,7 @@ class LinusTourController_LinusTourController {
     /**
      * Show the tour menu, e.g. after a tour is done
      */
-    showMenu()
-    {
+    showMenu() {
         setTimeout(function () { this.gui.unhide() }.bind(this), this.timer);
     }
 
@@ -58237,8 +58233,7 @@ class LinusTourController_LinusTourController {
      * Starts the tour or opens it in editor, depending on the fact
      * whether editor is open or not
      */
-    startOrLoadTour(name, repeat = true)
-    {
+    startOrLoadTour(name, repeat = true) {
         if (this.isShowingEditor)
             this.tourEditor.loadTour(this.tours[name])
         else
@@ -58255,8 +58250,7 @@ class LinusTourController_LinusTourController {
      * 
      * If the tour should be repeated, this function will re-call itself.
      */
-    startTour(name, repeat = true)
-    {
+    startTour(name, repeat = true) {
         console.log("Tour", name);
         let tourString = this.tours[name];
         this.resetTourTimer();
@@ -58307,8 +58301,7 @@ class LinusTourController_LinusTourController {
     /**
      * Tour: add marker showing text at 3D position x/y/z (mapped to 2D)
      */
-    addMarker(delay, x, y, z, text, timespan)
-    {
+    addMarker(delay, x, y, z, text, timespan) {
         this.timer += delay * 1000. * this.timerSpeed;
         let p = {}
         p.x = x;
@@ -58325,8 +58318,7 @@ class LinusTourController_LinusTourController {
     /**
      * Tour: Remove marker with specific name
      */
-    removeMarker(delay, name)
-    {
+    removeMarker(delay, name) {
         this.timer += delay * 1000. * this.timerSpeed;
         let p = {}
         p.name = name;
@@ -58337,8 +58329,7 @@ class LinusTourController_LinusTourController {
     /**
      * Tour: Set a value in the GUI (directly, no transition)
      */
-    setParameter(delay, name, to)
-    {
+    setParameter(delay, name, to) {
         this.timer += delay * 1000 * this.timerSpeed;
         let p = {}
         p["name"] = name;
@@ -58351,8 +58342,7 @@ class LinusTourController_LinusTourController {
      * Tour: Select items. The selection map contains the IDs of all items
      * to be shown 
      */
-    setSelection(delay, selectionMap)
-    {
+    setSelection(delay, selectionMap) {
         console.log(selectionMap)
         this.timer += delay * 1000 * this.timerSpeed;
         let p = {}
@@ -58364,8 +58354,7 @@ class LinusTourController_LinusTourController {
     /**
      * Tour: Set a value in the GUI (directly, no transition)
      */
-    clearSelection(delay)
-    {
+    clearSelection(delay) {
         this.timer += delay * 1000 * this.timerSpeed;
         let p = {}
         p.context = this.linus
@@ -58375,8 +58364,7 @@ class LinusTourController_LinusTourController {
     /**
      * Smoother rotations
      */
-    moveCameraAroundY(delay, timespan)
-    {
+    moveCameraAroundY(delay, timespan) {
         this.timer += delay * 1000 * this.timerSpeed;
         let p = {}
         p.timespan = timespan * this.timerSpeed;
@@ -58388,8 +58376,7 @@ class LinusTourController_LinusTourController {
     /**
      * Tour: helper that gets called after the user-specified delay
      */
-    moveCameraAroundYHelper(p)
-    {
+    moveCameraAroundYHelper(p) {
         let fps = 30;
         let angle = Math.atan(p.context.camera.position.x, p.context.camera.position.z);
         let radius = Math.sqrt(p.context.camera.position.x * p.context.camera.position.x + p.context.camera.position.z * p.context.camera.position.z);
@@ -58412,8 +58399,7 @@ class LinusTourController_LinusTourController {
     /**
      * Tour: move the camera to x,y,z (linear interpolation) 
      */
-    moveCameraTo(delay, x, y, z, upX, upY, upZ, timespan)
-    {
+    moveCameraTo(delay, x, y, z, upX, upY, upZ, timespan) {
         this.timer += delay * 1000 * this.timerSpeed;
         let p = {}
         p.name = name
@@ -58441,8 +58427,7 @@ class LinusTourController_LinusTourController {
     /**
      * Tour: helper that gets called after the user-specified delay
      */
-    moveCameraHelper(p)
-    {
+    moveCameraHelper(p) {
         let fromX = p.context.camera.position.x
         let fromY = p.context.camera.position.y
         let fromZ = p.context.camera.position.z
@@ -58459,7 +58444,9 @@ class LinusTourController_LinusTourController {
         let upZ = (p.upZ - fromUpZ) / numSteps;
         console.log("Up:", upX, upY, upZ);
 
-        for (let ii = 0; ii < Math.max(1, fps * p.timespan); ii++) {
+        let numberOfRuns = Math.max(1, fps * p.timespan); // at least once
+        
+        for (let ii = 0; ii < numberOfRuns; ii++) {
             let i = this.ease(ii, fps * p.timespan)
             let pp = {}
             pp.name = p.name;
@@ -58509,8 +58496,7 @@ class LinusTourController_LinusTourController {
     /**
      * Tour: Fade a parameter value with the specified speed (change rate per second)
      */
-    fadeParameter(delay, name, to, duration)
-    {
+    fadeParameter(delay, name, to, duration) {
         this.timer += delay * 1000 * this.timerSpeed;
         let p = {}
         p.name = name
@@ -58531,8 +58517,7 @@ class LinusTourController_LinusTourController {
     /**
      * Tour: helper that gets called after the user-specified delay
      */
-    fadeParameterHelper(p)
-    {
+    fadeParameterHelper(p) {
         let from = p.gui.getValue(p.name);
         if (p.gui.types[p.name] == "float") {
             from = parseFloat(from)
@@ -61431,15 +61416,20 @@ class Linus_Linus {
 
 class LinusStarter_LinusStarter {
 
+    /**
+     * Triggers the start of linus. Requires a lis of tours (which can be 
+     * an empty array if you do not want to load any tours). Tours are 
+     * defined by objects with "name" and "code" strings.
+     */
     constructor(tourList) {
         this.tourList = tourList;
         // Start the actuall progress
         console.time('time to load data');
-        var url = new URL(window.location.href);
+        let url = new URL(window.location.href);
 
         // Decide whether to load by a HTTP request or as simple "include"
         if (window.location.protocol.includes("http")) {
-            var dataUrl = url.toString().substring(0, url.toString().lastIndexOf("/")) + "/data/data.json";
+            let dataUrl = url.toString().substring(0, url.toString().lastIndexOf("/")) + "/data/data.json";
             this.handleLoadingFromServer(dataUrl)
         }
         else {
@@ -61447,21 +61437,31 @@ class LinusStarter_LinusStarter {
         }
     }
 
+    /**
+     * Opening the tool from the file system, we can simply include it.
+     * That way we cannot have a progress bar (but we don't need it since
+     * loading time should be close to 0).
+     */
     handleLoadingFromLocal() {
         console.log("This script runs locally")
-        var script = document.createElement('script');
-        script.onload = () => { this.loadEverything(data) };
+        let script = document.createElement('script');
+        script.onload = () => { this.loadData(data) };
         script.src = "data/data.json";
         document.head.appendChild(script);
     }
 
+    /**
+     * Load the data in the background from the server. This allows us
+     * to monitor progress of loading, but it is not possible on local
+     * filesystems.
+     */
     handleLoadingFromServer(dataUrl) {
-        console.log("This script runs on a server. Data:", dataUrl)
-        var client = new XMLHttpRequest();
+        console.log("This script runs on a server. ")
+        let client = new XMLHttpRequest();
         client.open('GET', dataUrl);
         client.onprogress = (e) => {
-            var current = -1;
-            var max = 1;
+            let current = -1;
+            let max = 1;
             if (e.lengthComputable) {
                 current = e.loaded;
                 max = e.total;
@@ -61475,57 +61475,64 @@ class LinusStarter_LinusStarter {
         client.send();
     }
 
+    /**
+     * Data volume, for user output
+     */
     roundMegaBytes(val) {
         return Math.ceil(val / 1024 / 1024)
     }
 
+    /**
+     * Updates the progress bar
+     */
     handleProgress(current, max) {
-        var percent = (current / max) * 100.;
-        console.log(" Status: ", current, max)
+        let percent = (current / max) * 100.;
         document.getElementById("loadingBarInner").style.width = percent + "%";
         document.getElementById("loadingBarInnerStatus").innerHTML = current > 0 ?
             this.roundMegaBytes(current) + "MB of " + this.roundMegaBytes(max) + "MB" : ""
 
     }
 
-    receiveDataFromServer(receivedData) {
-        var receivedData = receivedData.replace("var data = ", "")
-        var data = null
+    /**
+     * Prepare data that was loaded from a server
+     */
+    receiveDataFromServer(receivedDataRaw) {
+        let receivedData = receivedDataRaw.replace("var data = ", "")
+        let data = null
         if (receivedData.charAt(0) === "{") {
             console.log("Non-Zipped")
-            data = JSON.parse(receivedData) // Already
+            data = JSON.parse(receivedData) // Already usable as it is
         }
         else {
             console.log("Zipped")
-            data = receivedData.slice(1, -1) // Zipped; remove surrounding quotes
+            data = receivedData.slice(1, -1) // Zipped - remove surrounding quotes
         }
-        this.loadEverything(data)
+        this.loadData(data)
     }
 
-    loadEverything(data) {
-        console.log("Finished loading of script, now processing data")
+    /**
+     * Handles the loading of linus and its components.
+     */
+    loadData(data) {
         console.timeEnd('time to load data');
 
-        var url = new URL(window.location.href);
+        // Create the GUI and vis tool
+        let gui = new LinusGUI();
+        let linus = new Linus_Linus(gui);
 
-        // Create a regular GUI (builds HTML GUI)
-        //var gui = new LinusGUI();
-
-        // Create the vis tool, using the GUI
-        var gui = new LinusGUI();
-        var linus = new Linus_Linus(gui);
-        console.log(data)
         // Now set data and parameters. Must be done first in order to prepare geometry etc.
         linus.setData(data);
+
+        // Get URL parameters
+        let url = new URL(window.location.href);
         linus.setAA((url.searchParams.get("aa") !== null));
         linus.setShowFps((url.searchParams.get("fps") !== null));
         linus.disableGUI((url.searchParams.get("nogui") !== null));
         linus.setLOD(url.searchParams.get("lod") ? url.searchParams.get("lod") : 1);
         linus.setVr((url.searchParams.get("vr") !== null));
 
-        // TODO: avoid this (doesn't look too nice)
+        // Connect mouse events to linus
         onmousedown = linus.onmousedown.bind(linus);
-        //onclick = linus.onmousedown.bind(linus);
         onmousemove = linus.onmousemove.bind(linus);
         onmouseup = linus.onmouseup.bind(linus);
         ondblclick = linus.ondblclick.bind(linus);
@@ -61534,26 +61541,27 @@ class LinusStarter_LinusStarter {
         linus.start();
 
         // The tour module, manipulating GUI and the vis tool (e.g. camera)
-        var tours = new LinusTourController_LinusTourController(linus, gui);
-
-        // Get settings first, then create the controller module
+        // (Must be performed after linus was started!)
+        let tours = new LinusTourController_LinusTourController(linus, gui);
         if (url.searchParams.get("editor") !== null) tours.showTourEditor();
-        if (url.searchParams.get("tour") !== null) tours.addTour("default tour", url.searchParams.get("tour"));
-
+        if (url.searchParams.get("tour") !== null) tours.addTour("Default tour", url.searchParams.get("tour"));
         tours = this.addMoreTours(tours);
         tours.create();
 
         // If we want to, we can now auto-start a certain tour. E.g. if "&autoStartTour=[tourName]" is in URL
         if (url.searchParams.get("autoStartTour") !== null) {
-            var tourToStart = url.searchParams.get("autoStartTour");
-            if (tourToStart === "") tourToStart = "default tour";
+            let tourToStart = url.searchParams.get("autoStartTour");
+            if (tourToStart === "") tourToStart = "Default tour";
             tours.startTour(tourToStart);
         }
     }
 
+    /**
+     * List of tours, each item must be an object consisting of fields "name" and "code"
+     */
     addMoreTours(tours) {
         console.log("Check for additional tours - found", this.tourList.length)
-        for(var i = 0; i < this.tourList.length; i++) {
+        for (let i = 0; i < this.tourList.length; i++) {
             tours.addTour(this.tourList[i].name, this.tourList[i].code)
         }
 
