@@ -28,9 +28,10 @@ import { default as Stats } from "../includes/three/stats.min.js";
 import { VRButton } from "../includes/three/VRButton.js";
 import { default as Pako } from "../includes/pako.js";
 import { default as JSZip } from "../includes/jszip.min.js";
-import { default as FileSaver } from "../includes/FileSaver.min.js";
 import ColorMaps from "./ColorMaps.js";
 import Shaders from "./Shaders.js";
+import ScreenCapture from "./ScreenCapture.js";
+import ExportHandler from "./ExportHandler.js";
 
 export default class Linus {
     constructor(gui) {
@@ -73,6 +74,8 @@ export default class Linus {
         this.colorMapNames = ["Custom colors"];
         this.colorMaps = new ColorMaps().getColorMaps();
         this.shaders = new Shaders();
+        this.exportHandler = new ExportHandler();
+        this.screenCapture = new ScreenCapture(this.exportHandler);
 
         // Own helpers
         this.cameraUpdateCallback = function () {}; // A function that sets an updated camera position. Needed to avoid artifacts by parallelization
@@ -118,13 +121,6 @@ export default class Linus {
         this.mercatorModeOptions = [];
         this.niceColors = new ColorMaps().getNiceColors();
         this.niceColorsCopy = []; // backup
-        this.isVideoRecording = false;
-        this.videoCapturer = null;
-        this.videoTime = 0;
-        this.videoBitrate = 50000000;
-        this.videoFormat = "video/webm";
-        this.videoExport = "video/webm";
-        this.videoFileType = "webm";
     }
     ///////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////// external access: setup and data
@@ -166,14 +162,14 @@ export default class Linus {
     /////////////////////////// Annotation and inset handling
 
     spriteBackgroundDrawer(ctx, wOriginal, hOriginal, rOriginal, upscale) {
-        var w = wOriginal * upscale;
-        var arrowBaseWidth = 20;
-        var wArrowPos = (w - arrowBaseWidth) / 2;
-        var arrowHeight = 30;
-        var h = hOriginal * upscale;
-        var r = rOriginal * upscale;
-        var x = 0;
-        var y = 0;
+        let w = wOriginal * upscale;
+        let arrowBaseWidth = 20;
+        let wArrowPos = (w - arrowBaseWidth) / 2;
+        let arrowHeight = 30;
+        let h = hOriginal * upscale;
+        let r = rOriginal * upscale;
+        let x = 0;
+        let y = 0;
         console.log("Create sprite of size", w, h);
         ctx.beginPath();
         ctx.moveTo(x + r, y);
@@ -196,23 +192,23 @@ export default class Linus {
     }
 
     makeTextSprite(message, x, y, z) {
-        var upscale = 2;
-        var fontface = "Arial";
-        var fontsize = 18;
-        var backgroundColor = { r: 0, g: 0, b: 0, a: 0.5 };
-        var textColor = { r: 255, g: 255, b: 255, a: 1.0 };
-        var spacing = 10;
-        var heightBuffer = 40; // used for down-pointing arrow
-        var canvas = document.createElement("canvas");
-        var context = canvas.getContext("2d");
+        let upscale = 2;
+        let fontface = "Arial";
+        let fontsize = 18;
+        let backgroundColor = { r: 0, g: 0, b: 0, a: 0.5 };
+        let textColor = { r: 255, g: 255, b: 255, a: 1.0 };
+        let spacing = 10;
+        let heightBuffer = 40; // used for down-pointing arrow
+        let canvas = document.createElement("canvas");
+        let context = canvas.getContext("2d");
         context.font = parseInt(fontsize) + "px " + fontface;
         console.log(context.font);
-        var metrics = context.measureText(message);
-        var textWidth = metrics.width;
-        var backgroundWidth = parseInt(textWidth + 2 * spacing);
-        var backgroundHeight = parseInt(fontsize * 1.4 + 2 * spacing);
-        var totalWidth = backgroundWidth;
-        var totalHeight = backgroundHeight + heightBuffer;
+        let metrics = context.measureText(message);
+        let textWidth = metrics.width;
+        let backgroundWidth = parseInt(textWidth + 2 * spacing);
+        let backgroundHeight = parseInt(fontsize * 1.4 + 2 * spacing);
+        let totalWidth = backgroundWidth;
+        let totalHeight = backgroundHeight + heightBuffer;
         canvas.width = totalWidth * upscale;
         canvas.height = totalHeight * upscale;
         console.log("metrics", metrics, canvas);
@@ -253,18 +249,18 @@ export default class Linus {
             (fontsize + spacing) * upscale
         );
 
-        var texture = new Texture(canvas);
+        let texture = new Texture(canvas);
         texture.needsUpdate = true;
 
-        var spriteMaterial = new SpriteMaterial({
+        let spriteMaterial = new SpriteMaterial({
             map: texture,
             useScreenCoordinates: false,
             sizeAttenuation: false,
         });
-        var sprite = new Sprite(spriteMaterial);
-        var s = 0.001;
+        let sprite = new Sprite(spriteMaterial);
+        let s = 0.001;
         sprite.scale.set(s * totalWidth, s * totalHeight, 1);
-        var dataScale = this.data.sets[0].scale * this.getScale();
+        let dataScale = this.data.sets[0].scale * this.getScale();
         console.log(dataScale);
         sprite.position.set(dataScale * x, dataScale * y, dataScale * z);
         if (this.webVr) {
@@ -277,16 +273,16 @@ export default class Linus {
     // Name is a unique identifier
     // x, y, z are the 3d positions (which will be projected to the current 2D position on the canvas)
     addAnnotation(name, x, y, z, text) {
-        var sprite = this.makeTextSprite(text, x, y, z);
+        let sprite = this.makeTextSprite(text, x, y, z);
         sprite.internalName = name;
         this.scene.add(sprite);
-        var object = { name: name };
+        let object = { name: name };
         this.annotations.push(object);
     }
 
     // Removes an annotation from DOM and from our list
     removeAnnotation(name) {
-        for (var i = this.annotations.length - 1; i >= 0; i--) {
+        for (let i = this.annotations.length - 1; i >= 0; i--) {
             if (this.annotations[i].name == name) {
                 console.log("Remove from array");
                 // Remove the visiblity-class, leads to fading out slowly
@@ -298,7 +294,7 @@ export default class Linus {
             }
         }
 
-        for (var i = this.scene.children.length - 1; i > 0; i--) {
+        for (let i = this.scene.children.length - 1; i > 0; i--) {
             if (this.scene.children[i].internalName !== undefined) {
                 if (this.scene.children[i].internalName === name) {
                     this.scene.remove(this.scene.children[i]);
@@ -310,7 +306,7 @@ export default class Linus {
 
     // Projects a 3D pos to the current 2D pos on the canvas
     toScreenXY(pos, camera, canvas) {
-        var projScreenMat = new Matrix4();
+        let projScreenMat = new Matrix4();
         projScreenMat.multiplyMatrices(
             camera.projectionMatrix,
             camera.matrixWorldInverse
@@ -340,7 +336,7 @@ export default class Linus {
             // TODO Anything smarter here?
             this.setInsetLabels("X", "Y", "Z");
         } else {
-            var zLabel = "time";
+            let zLabel = "time";
             if (this.gui.getValue("0_mercator__z Mapping") == 1) {
                 // TODO Anything smarter here?
                 zLabel = "signal";
@@ -356,8 +352,8 @@ export default class Linus {
 
     // Creates an array of n times "elem"
     createFilledArray(elem, n) {
-        var arr = [];
-        for (var i = 0; i <= n; i++) {
+        let arr = [];
+        for (let i = 0; i <= n; i++) {
             arr.push(elem);
         }
 
@@ -366,7 +362,7 @@ export default class Linus {
 
     // Just a little helper to shuffle an array
     shuffle(a) {
-        var j, x, i;
+        let j, x, i;
         for (i = a.length - 1; i > 0; i--) {
             j = Math.floor(Math.random() * (i + 1));
             x = a[i];
@@ -378,14 +374,14 @@ export default class Linus {
 
     // Converts a trajectory to a list of tangents
     posToOrientation(positions, dim) {
-        var result = new Array(positions.length);
+        let result = new Array(positions.length);
         if (positions.length < 2 * dim) {
             return result.fill(0);
         }
-        var debug = false;
-        for (var i = 0; i < positions.length; i += dim) {
-            var i1 = i == 0 ? 0 : i - dim;
-            var i2 = i >= positions.length - dim ? i : i + dim;
+        let debug = false;
+        for (let i = 0; i < positions.length; i += dim) {
+            let i1 = i == 0 ? 0 : i - dim;
+            let i2 = i >= positions.length - dim ? i : i + dim;
             x = positions[i2] - positions[i1];
             y = dim >= 2 ? positions[i2 + 1] - positions[i1 + 1] : 0;
             z = dim >= 3 ? positions[i2 + 2] - positions[i1 + 2] : 0;
@@ -412,7 +408,7 @@ export default class Linus {
 
     // The actual program start, and start of the event loop
     start() {
-        var testCanvas = document.createElement("canvas");
+        let testCanvas = document.createElement("canvas");
         if (
             !(
                 window.WebGLRenderingContext &&
@@ -467,8 +463,8 @@ export default class Linus {
         normalize,
         shared
     ) {
-        var i = this.customAttributes.length;
-        for (var j = 0; j < i; j++) {
+        let i = this.customAttributes.length;
+        for (let j = 0; j < i; j++) {
             if (
                 this.customAttributes[j]["name"] == name &&
                 this.customAttributes[j]["dataset"] == dataset
@@ -489,7 +485,7 @@ export default class Linus {
 
     // Gets the index of a data attribute based on its name (reverse index)
     getDataAttributeIndex(setId, name) {
-        for (var i = 0; i < this.dataAttributes.length; i++) {
+        for (let i = 0; i < this.dataAttributes.length; i++) {
             if (
                 this.dataAttributes[i].name == name &&
                 this.dataAttributes[i].dataset == setId
@@ -503,7 +499,7 @@ export default class Linus {
     // Adds preliminary notes for a new data attribute to the list of attributes.
     // (Data attribute means: something directly copied from the given data, like position.)
     addDataAttribute(dataset, name, dim, min, max, shared, fixedColor) {
-        for (var i = 0; i < this.dataAttributes.length; i++) {
+        for (let i = 0; i < this.dataAttributes.length; i++) {
             if (
                 this.dataAttributes[i].name == name &&
                 this.dataAttributes[i].dataset == dataset
@@ -518,8 +514,8 @@ export default class Linus {
                 return;
             }
         }
-        var i = this.dataAttributes.length;
-        var type = "float";
+        let i = this.dataAttributes.length;
+        let type = "float";
         if (dim == 2) {
             type = "vec2";
         } else if (dim == 3) {
@@ -539,7 +535,7 @@ export default class Linus {
 
     // Adds preliminary notes for uniforms we want later to create inside the shader source code
     addCustomUniform(dataset, type, name, num, value) {
-        for (var i = 0; i < this.customUniforms.length; i++) {
+        for (let i = 0; i < this.customUniforms.length; i++) {
             if (
                 this.customUniforms[i].name === name &&
                 this.customUniforms[i].dataset === dataset
@@ -547,7 +543,7 @@ export default class Linus {
                 return;
             }
         }
-        var newUniform = {};
+        let newUniform = {};
         newUniform.dataset = dataset;
         newUniform.type = type;
         newUniform.name = name;
@@ -559,16 +555,16 @@ export default class Linus {
     // Alters the shader source: add a color mode for each attribute (e.g. colorize according to time point).
     addColorModesToShader(setId, shader) {
         console.log("Add color modes", this.dataAttributes);
-        var nl = "\n" + Array(5).join(" ");
-        var code = nl;
-        var magicNumber = 7; // Assuming we already have n color modes, so we add a (n+1)th one here
-        for (var i = 0; i < this.dataAttributes.length; i++) {
+        let nl = "\n" + Array(5).join(" ");
+        let code = nl;
+        let magicNumber = 7; // Assuming we already have n color modes, so we add a (n+1)th one here
+        for (let i = 0; i < this.dataAttributes.length; i++) {
             if (this.dataAttributes[i].dataset !== setId) continue;
-            var name = this.cleanVarName(this.dataAttributes[i].name);
-            var lower = this.dataAttributes[i].fixedColor
+            let name = this.cleanVarName(this.dataAttributes[i].name);
+            let lower = this.dataAttributes[i].fixedColor
                 ? name + "Min"
                 : "max(" + name + "Min, " + name + "From)";
-            var upper = this.dataAttributes[i].fixedColor
+            let upper = this.dataAttributes[i].fixedColor
                 ? name + "Max"
                 : "min(" + name + "To," + name + "Max)";
             code +=
@@ -591,18 +587,18 @@ export default class Linus {
 
     // Alters the shader source: add mercator height for each attribute (e.g. late time points -> higher peaks in mercator)
     addMercatorModesToShader(setId, shader) {
-        var nl = "\n" + Array(5).join(" ");
-        var code = nl;
+        let nl = "\n" + Array(5).join(" ");
+        let code = nl;
         code += "if(false) {} " + nl; // Dummy - maybe something else?
-        var magicNumber = 0; // Assuming we already have 0 mercator modes
-        for (var i = 0; i < this.dataAttributes.length; i++) {
+        let magicNumber = 0; // Assuming we already have 0 mercator modes
+        for (let i = 0; i < this.dataAttributes.length; i++) {
             if (this.dataAttributes[i].dataset !== setId) continue;
 
-            var name = this.cleanVarName(this.dataAttributes[i].name);
-            var lower = this.dataAttributes[i].fixedColor
+            let name = this.cleanVarName(this.dataAttributes[i].name);
+            let lower = this.dataAttributes[i].fixedColor
                 ? name + "Min"
                 : "max(" + name + "Min, " + name + "From)";
-            var upper = this.dataAttributes[i].fixedColor
+            let upper = this.dataAttributes[i].fixedColor
                 ? name + "Max"
                 : "min(" + name + "To," + name + "Max)";
             code +=
@@ -626,9 +622,9 @@ export default class Linus {
     // Alters the shader source: adds a (remove-)filter based on each attribute ("discard if not in user-specified range").
     addFilterToShader(setId, shader, indent) {
         console.log("Add filter to shader for dataset:", setId);
-        var nl = "\n" + Array(indent + 1).join(" ");
-        var newCode = nl;
-        for (var i = 0; i < this.dataAttributes.length; i++) {
+        let nl = "\n" + Array(indent + 1).join(" ");
+        let newCode = nl;
+        for (let i = 0; i < this.dataAttributes.length; i++) {
             if (this.dataAttributes[i].dataset !== setId) continue;
             console.log(
                 "Add ",
@@ -637,7 +633,7 @@ export default class Linus {
                 this.dataAttributes[i].dataset
             );
 
-            var name = this.cleanVarName(this.dataAttributes[i].name);
+            let name = this.cleanVarName(this.dataAttributes[i].name);
             if (this.dataAttributes[i].dim == 1) {
                 newCode +=
                     "if(v" +
@@ -662,17 +658,17 @@ export default class Linus {
     // Alters the shader source: add uniforms. Will also include color-related attributes, which are
     // needed for some color-related uniforms.
     addUniformsToShader(setId, shader) {
-        var newCode = "\n";
-        for (var i = 0; i < this.customUniforms.length; i++) {
+        let newCode = "\n";
+        for (let i = 0; i < this.customUniforms.length; i++) {
             if (this.customUniforms[i].dataset !== setId) continue;
 
-            var type = this.customUniforms[i].type;
+            let type = this.customUniforms[i].type;
             if (type == "color") {
                 type = "vec3";
             }
 
             // The following is actually not yet supported in WebGL...
-            var arrayExt = "";
+            let arrayExt = "";
             if (this.customUniforms[i].num > 1) {
                 arrayExt = "[" + this.customUniforms[i].num + "]";
             }
@@ -708,12 +704,12 @@ export default class Linus {
     // Alters the shader source: varying for each vertex attribute
     addVaryingsToShader(setId, shader) {
         console.log("Add varyings to shader for dataset ", setId);
-        var nl = Array(5).join(" ");
-        var newCode = "\n";
-        for (var i = 0; i < this.dataAttributes.length; i++) {
+        let nl = Array(5).join(" ");
+        let newCode = "\n";
+        for (let i = 0; i < this.dataAttributes.length; i++) {
             if (this.dataAttributes[i].dataset !== setId) continue;
 
-            var type = this.dataAttributes[i].type;
+            let type = this.dataAttributes[i].type;
             if (type == "color") {
                 type = "vec3";
             }
@@ -742,9 +738,9 @@ export default class Linus {
     // Alters the shader source: interpolate state-specific attributes
     addCustomAttributesToShaderStep(setId, defineTypes, shader) {
         console.log("Call addCustomAttributesToShader for dataset ", setId);
-        var newCode = "\n";
-        var newCodeInterp = "\n";
-        for (var i = 0; i < this.customAttributes.length; i++) {
+        let newCode = "\n";
+        let newCodeInterp = "\n";
+        for (let i = 0; i < this.customAttributes.length; i++) {
             if (this.customAttributes[i].dataset !== setId) continue;
             console.log(
                 "Handle attribute ",
@@ -752,7 +748,7 @@ export default class Linus {
                 ", ",
                 this.customAttributes[i].name
             );
-            var name = this.cleanVarName(this.customAttributes[i].name);
+            let name = this.cleanVarName(this.customAttributes[i].name);
             newCodeInterp += this.createAttributeForShader(
                 name,
                 this.customAttributes[i].type,
@@ -774,7 +770,7 @@ export default class Linus {
                     name +
                     ";\n";
             } else {
-                for (var j = 0; j < this.customAttributes[i].count; j++) {
+                for (let j = 0; j < this.customAttributes[i].count; j++) {
                     newCode +=
                         "attribute " +
                         this.customAttributes[i].type +
@@ -813,8 +809,8 @@ export default class Linus {
         indent,
         defineTypes
     ) {
-        var nl = "\n" + Array(indent + 1).join(" ");
-        var code = nl;
+        let nl = "\n" + Array(indent + 1).join(" ");
+        let code = nl;
         if (shared) {
             code +=
                 (defineTypes ? attType + " " : "") +
@@ -847,7 +843,7 @@ export default class Linus {
                 "Index);" +
                 nl;
             code += (defineTypes ? attType + " " : "") + attName + "Out;" + nl;
-            for (var i = 0; i < count; i++) {
+            for (let i = 0; i < count; i++) {
                 if (interpolate && i >= 1) {
                     code +=
                         "if(" +
@@ -908,7 +904,7 @@ export default class Linus {
         let nameCleaned = name.replace(/[^A-Za-z0-9]/g, "");
 
         if (nameCleaned.match(/^\d/)) {
-            var m =
+            let m =
                 "Error! Attribute " +
                 name +
                 " must start with a non-numeric character.";
@@ -926,15 +922,15 @@ export default class Linus {
     // Currently "under construction". In general this function creates a single Object, like a line. However,
     // it might be necessary to subdivide the objects automatically (...)
     addDataHelperLines(i, k, dim, numStates) {
-        var elementSize = dim; // for lines, and triangles, since "dim" (e.g. 3) values(x,y,z) must stay together
-        var numElements =
+        let elementSize = dim; // for lines, and triangles, since "dim" (e.g. 3) values(x,y,z) must stay together
+        let numElements =
             this.data.sets[i].states[0].positions[k].length / elementSize;
-        var geometry = new BufferGeometry();
+        let geometry = new BufferGeometry();
 
         geometry.type = this.data.sets[i].type;
         geometry.originIndex = k;
-        var setIds = this.createFilledArray(i, numElements - 1);
-        var drawIndexValues = JSON.parse(
+        let setIds = this.createFilledArray(i, numElements - 1);
+        let drawIndexValues = JSON.parse(
             JSON.stringify(this.data.sets[i].entities[k])
         ); // this.createFilledArray(1, numElements - 1)
         geometry.setAttribute("setId", new Float32BufferAttribute(setIds, 1));
@@ -958,15 +954,15 @@ export default class Linus {
         this.numGlPrimitives += this.data.sets[i].indices[k].length / 2;
 
         for (
-            var j = 0;
+            let j = 0;
             j < numStates;
             j++ // States, starting from 1!!!
         ) {
-            var positions = this.data.sets[i].states[j].positions[
+            let positions = this.data.sets[i].states[j].positions[
                 k
             ]; /**.slice(dim * fr, dim * to)**/
-            var last = [];
-            for (var l = positions.length - dim; l < positions.length; l++) {
+            let last = [];
+            for (let l = positions.length - dim; l < positions.length; l++) {
                 last.push(positions[l] + (positions[l] - positions[l - dim])); // It's a fake, one step further
             }
 
@@ -983,13 +979,13 @@ export default class Linus {
             );
 
             for (
-                var a = 0;
+                let a = 0;
                 a < this.data.sets[i].states[j].attributes.length;
                 a++
             ) {
-                var aDim = this.data.sets[i].states[j].attributes[a].dim;
-                var shared = this.data.sets[i].states[j].attributes[a].shared;
-                var attName = this.data.sets[i].states[j].attributes[a].name;
+                let aDim = this.data.sets[i].states[j].attributes[a].dim;
+                let shared = this.data.sets[i].states[j].attributes[a].shared;
+                let attName = this.data.sets[i].states[j].attributes[a].name;
 
                 if (shared == true && j > 0) {
                     // Skip attributes if we share and have read the first one already.
@@ -997,7 +993,7 @@ export default class Linus {
                     continue;
                 }
 
-                var values = this.data.sets[i].states[j].attributes[a].values[
+                let values = this.data.sets[i].states[j].attributes[a].values[
                     k
                 ]; /**.slice(aDim * fr, aDim * to)**/
                 if (shared == false) {
@@ -1008,12 +1004,12 @@ export default class Linus {
                     new Float32BufferAttribute(values, aDim)
                 );
 
-                var id = this.getDataAttributeIndex(
+                let id = this.getDataAttributeIndex(
                     i,
                     this.data.sets[i].states[j].attributes[a].name
                 );
 
-                for (var vv = 0; vv < values.length; vv++) {
+                for (let vv = 0; vv < values.length; vv++) {
                     this.dataAttributes[id].min = Math.min(
                         this.dataAttributes[id].min,
                         values[vv]
@@ -1028,7 +1024,7 @@ export default class Linus {
 
         // Create a unique id with setId_lineId
         geometry.totalLineId = [];
-        for (var l = 0; l < this.data.sets[i].entities[k].length; l++) {
+        for (let l = 0; l < this.data.sets[i].entities[k].length; l++) {
             geometry.totalLineId.push(
                 i.toString() + "_" + this.data.sets[i].entities[k][l].toString()
             );
@@ -1043,15 +1039,15 @@ export default class Linus {
     // it might be necessary to subdivide the objects automatically (...)
     addDataHelperTriangles(i, k, dim, numStates) {
         console.log("Entities of", i, this.data.sets[i].entities);
-        var elementSize = dim; // for lines, and triangles, since "dim" (e.g. 3) values(x,y,z) must stay together
-        var numElements =
+        let elementSize = dim; // for lines, and triangles, since "dim" (e.g. 3) values(x,y,z) must stay together
+        let numElements =
             this.data.sets[i].states[0].positions[k].length / elementSize;
-        var geometry = new BufferGeometry();
+        let geometry = new BufferGeometry();
         geometry.type = this.data.sets[i].type;
         geometry.originIndex = k;
 
-        var setIds = this.createFilledArray(i, numElements - 1);
-        var drawIndexValues = JSON.parse(
+        let setIds = this.createFilledArray(i, numElements - 1);
+        let drawIndexValues = JSON.parse(
             JSON.stringify(this.data.sets[i].entities[k])
         ); // this.createFilledArray(1, numElements - 1)
 
@@ -1080,15 +1076,15 @@ export default class Linus {
         this.numGlPrimitives += this.data.sets[i].indices[k].length / 3;
 
         for (
-            var j = 0;
+            let j = 0;
             j < numStates;
             j++ // States, starting from 1!!!
         ) {
-            var positions = this.data.sets[i].states[j].positions[
+            let positions = this.data.sets[i].states[j].positions[
                 k
             ]; /**.slice(dim * fr, dim * to)**/
-            var last = [];
-            for (var l = positions.length - dim; l < positions.length; l++) {
+            let last = [];
+            for (let l = positions.length - dim; l < positions.length; l++) {
                 last.push(positions[l] + (positions[l] - positions[l - dim])); // It's a fake, one step further
             }
 
@@ -1098,16 +1094,16 @@ export default class Linus {
             );
 
             for (
-                var a = 0;
+                let a = 0;
                 a < this.data.sets[i].states[j].attributes.length;
                 a++
             ) {
-                var aDim = this.data.sets[i].states[j].attributes[a].dim;
-                var values = this.data.sets[i].states[j].attributes[a].values[
+                let aDim = this.data.sets[i].states[j].attributes[a].dim;
+                let values = this.data.sets[i].states[j].attributes[a].values[
                     k
                 ]; /**.slice(aDim * fr, aDim * to)**/
-                var shared = this.data.sets[i].states[j].attributes[a].shared;
-                var attName = this.data.sets[i].states[j].attributes[a].name;
+                let shared = this.data.sets[i].states[j].attributes[a].shared;
+                let attName = this.data.sets[i].states[j].attributes[a].name;
 
                 if (shared == true && j > 0) {
                     // Skip attributes if we share and have read the first one already
@@ -1121,7 +1117,7 @@ export default class Linus {
                     new Float32BufferAttribute(values, aDim)
                 );
 
-                for (var vv = 0; vv < values.length; vv++) {
+                for (let vv = 0; vv < values.length; vv++) {
                     this.dataAttributes[a].min = Math.min(
                         this.dataAttributes[a].min,
                         values[vv]
@@ -1136,7 +1132,7 @@ export default class Linus {
 
         // Create a unique id with setId_triangleId
         geometry.totalLineId = [];
-        for (var l = 0; l < this.data.sets[i].entities[k].length; l++) {
+        for (let l = 0; l < this.data.sets[i].entities[k].length; l++) {
             geometry.totalLineId.push(
                 i.toString() + "_" + this.data.sets[i].entities[k][l].toString()
             );
@@ -1147,8 +1143,8 @@ export default class Linus {
 
     // Reads the data and builds up all the geometry
     preprocessData(data, i) {
-        var dim = this.data.dim;
-        var objects = [];
+        let dim = this.data.dim;
+        let objects = [];
 
         this.setsAndStates.push({});
         this.setsAndStates[i].name = this.data.sets[i].name;
@@ -1157,9 +1153,9 @@ export default class Linus {
         this.setsAndStates[i].states = {};
 
         // Quickly look for some infos about the states
-        var numStates = this.data.sets[i].states.length;
+        let numStates = this.data.sets[i].states.length;
         for (
-            var j = 0;
+            let j = 0;
             j < numStates;
             j++ // States
         ) {
@@ -1168,14 +1164,14 @@ export default class Linus {
 
         // Collect some basic information about the optional attributes
         for (
-            var a = 0;
+            let a = 0;
             a < this.data.sets[i].states[0].attributes.length;
             a++
         ) {
-            var aDim = this.data.sets[i].states[0].attributes[a].dim;
-            var name = this.data.sets[i].states[0].attributes[a].name;
-            var shared = this.data.sets[i].states[0].attributes[a].shared;
-            var fixedColor = this.data.sets[i].states[0].attributes[a]
+            let aDim = this.data.sets[i].states[0].attributes[a].dim;
+            let name = this.data.sets[i].states[0].attributes[a].name;
+            let shared = this.data.sets[i].states[0].attributes[a].shared;
+            let fixedColor = this.data.sets[i].states[0].attributes[a]
                 .fixedColor;
             this.addDataAttribute(
                 i,
@@ -1190,7 +1186,7 @@ export default class Linus {
 
         // Now we work on initial state (0) first and extend later on
         for (
-            var k = 0;
+            let k = 0;
             k < this.data.sets[i].states[0].positions.length;
             k++ // Objects
         ) {
@@ -1205,7 +1201,7 @@ export default class Linus {
                 this.data.sets[i].states[0].positions.length * i + k,
                 "Preparing data"
             );
-            var geometry = null;
+            let geometry = null;
             if (this.data.sets[i].type === "triangles") {
                 geometry = this.addDataHelperTriangles(i, k, dim, numStates);
             } else {
@@ -1241,14 +1237,14 @@ export default class Linus {
 
     // Checks the data's extra attributes (except for position/orientation) and creates variables for the shader
     processAttributes(setId) {
-        for (var a = 0; a < this.dataAttributes.length; a++) {
+        for (let a = 0; a < this.dataAttributes.length; a++) {
             if (this.dataAttributes[a].dataset !== setId) continue;
 
-            var aDim = this.dataAttributes[a].dim;
-            var name = this.dataAttributes[a].name;
-            var shared = this.dataAttributes[a].shared;
-            var dataset = this.dataAttributes[a].dataset;
-            var type = "";
+            let aDim = this.dataAttributes[a].dim;
+            let name = this.dataAttributes[a].name;
+            let shared = this.dataAttributes[a].shared;
+            let dataset = this.dataAttributes[a].dataset;
+            let type = "";
             if (aDim == 1) {
                 type = "float";
             }
@@ -1326,22 +1322,11 @@ export default class Linus {
                 <span id="insetLabelRed">X</span>, 
                 <span id="insetLabelGreen">Y</span>, 
                 <span id="insetLabelBlue">Z</span>
-            </div>
-            <div id="screenshotVideoHolder">
-                <span id="screenshotButton">&#128247;</span>
-                <span id="videoButton">&#x25cf;</span>
-            </div>
-                `;
-
-        var screenshotLink = document.getElementById("screenshotButton");
-        screenshotLink.onclick = this.screenshot.bind(this);
-        var videoLink = document.getElementById("videoButton");
-        videoLink.onclick = this.video.bind(this);
+            </div>`;
 
         this.initGl();
-
         this.initGui();
-
+        this.screenCapture.init(this.renderer);
         this.div = document.getElementById("selectionBox");
         this.makeAllElementsVisible();
     }
@@ -1497,7 +1482,7 @@ export default class Linus {
     }
 
     initColormaps() {
-        for (var name in this.colorMaps) {
+        for (let name in this.colorMaps) {
             this.colorMapTextures.push(
                 new TextureLoader().load(this.colorMaps[name])
             );
@@ -1585,7 +1570,7 @@ export default class Linus {
         }
 
         console.log(this.data);
-        for (var i = 0; i < this.data.sets.length; i++) {
+        for (let i = 0; i < this.data.sets.length; i++) {
             // Create basic uniforms. They will be complemented by data-specific uniforms.
             if (this.data.sets[i].type == "triangles") {
                 this.uniforms[i] = this.getTriangleUniforms();
@@ -1605,8 +1590,8 @@ export default class Linus {
             }
 
             // Finally, add the geometry to the scene
-            for (var j = 0; j < objects.length; j++) {
-                var mesh = null;
+            for (let j = 0; j < objects.length; j++) {
+                let mesh = null;
                 if (objects[j].type === "triangles") {
                     mesh = new Mesh(objects[j], this.material[i]);
                 } else {
@@ -1630,9 +1615,9 @@ export default class Linus {
         this.scene.add(father);
         /*
         // DEBUG camera
-        var geometry1 = new SphereGeometry( 0.2, 32, 32 );
-        var material1 = new MeshBasicMaterial( {color: 0xffff00} );
-        var sphere1 = new Mesh( geometry1, material1 );
+        let geometry1 = new SphereGeometry( 0.2, 32, 32 );
+        let material1 = new MeshBasicMaterial( {color: 0xffff00} );
+        let sphere1 = new Mesh( geometry1, material1 );
         sphere1.position.add(this.webVrDisplacement)
         sphere1.position.add(new Vector3(0,0,-1))
         this.scene.add( sphere1 );
@@ -1700,7 +1685,7 @@ export default class Linus {
 
         // axes
         this.axes2 = new AxesHelper(0.81);
-        var colors = this.axes2.geometry.attributes.color;
+        let colors = this.axes2.geometry.attributes.color;
         colors.setXYZ(0, 1.0, 0.1, 0.1); // index, R, G, B
         colors.setXYZ(1, 1.0, 0.1, 0.1); // red
         colors.setXYZ(2, 0.2, 0.8, 0.1);
@@ -1720,7 +1705,7 @@ export default class Linus {
 
     // Sets scale to all objects of scene
     setScale(s) {
-        for (var i = 0; i < this.scene.children.length; i++) {
+        for (let i = 0; i < this.scene.children.length; i++) {
             this.scene.children[i].scale.set(s, s, s);
         }
     }
@@ -1758,11 +1743,11 @@ export default class Linus {
 
     mergeSort(array, comparefn) {
         function merge(arr, aux, lo, mid, hi, comparefn) {
-            var i = lo;
-            var j = mid + 1;
-            var k = lo;
+            let i = lo;
+            let j = mid + 1;
+            let k = lo;
             while (true) {
-                var cmp = comparefn(arr[i], arr[j]);
+                let cmp = comparefn(arr[i], arr[j]);
                 if (cmp <= 0) {
                     aux[k++] = arr[i++];
                     if (i > mid) {
@@ -1787,7 +1772,7 @@ export default class Linus {
                 aux[lo] = arr[lo];
                 return;
             }
-            var mid = Math.floor(lo + (hi - lo) / 2);
+            let mid = Math.floor(lo + (hi - lo) / 2);
             sortarrtoarr(arr, aux, lo, mid, comparefn);
             sortarrtoarr(arr, aux, mid + 1, hi, comparefn);
             merge(arr, aux, lo, mid, hi, comparefn);
@@ -1795,14 +1780,14 @@ export default class Linus {
 
         function sortarrtoarr(arr, aux, lo, hi, comparefn) {
             if (hi <= lo) return;
-            var mid = Math.floor(lo + (hi - lo) / 2);
+            let mid = Math.floor(lo + (hi - lo) / 2);
             sortarrtoaux(arr, aux, lo, mid, comparefn);
             sortarrtoaux(arr, aux, mid + 1, hi, comparefn);
             merge(aux, arr, lo, mid, hi, comparefn);
         }
 
         function merge_sort(arr, comparefn) {
-            var aux = arr.slice(0);
+            let aux = arr.slice(0);
             sortarrtoarr(arr, aux, 0, arr.length - 1, comparefn);
             return arr;
         }
@@ -1825,12 +1810,12 @@ export default class Linus {
         }
 
         // Stop sorting whenever we are still in the motion process
-        var camPos = new Vector3(0, 0, 1000)
+        let camPos = new Vector3(0, 0, 1000)
             .unproject(this.camera)
             .divideScalar(this.getScale());
         if (this.webVr) {
             // TODO Actually we must consider both camera and rotation for webvr!
-            var rotation = new Quaternion();
+            let rotation = new Quaternion();
             rotation = this.scene.children[0].getWorldQuaternion(rotation);
             rotation = rotation.inverse(rotation);
             camPos = new Vector3(0, 0, -5);
@@ -1864,12 +1849,12 @@ export default class Linus {
             return;
         }
 
-        var t0 = performance.now();
-        var t0a = 0;
+        let t0 = performance.now();
+        let t0a = 0;
 
         // If we made it until here, we will finally sort the scene
-        for (var i = 0; i < this.scene.children.length; i++) {
-            for (var j = 0; j < this.scene.children[i].children.length; j++) {
+        for (let i = 0; i < this.scene.children.length; i++) {
+            for (let j = 0; j < this.scene.children[i].children.length; j++) {
                 if (
                     this.scene.children[i].children[j].geometry.index === null
                 ) {
@@ -1877,17 +1862,17 @@ export default class Linus {
                     continue;
                 }
 
-                var ind = this.scene.children[i].children[j].geometry.index
+                let ind = this.scene.children[i].children[j].geometry.index
                     .array; // assignment just for convenience
-                var indCopy = ind.slice(0);
-                var pos = this.scene.children[i].children[j].geometry.attributes
+                let indCopy = ind.slice(0);
+                let pos = this.scene.children[i].children[j].geometry.attributes
                     .position.array; // TODO: or any pos1,2,...
-                var elementSize =
+                let elementSize =
                     this.scene.children[i].children[j].type == "Mesh" ? 3 : 2;
-                var distances = new Float32Array(ind.length / elementSize); // Multiple indices represent one primitive. We only consider first for sorting.
-                var cur = -1;
+                let distances = new Float32Array(ind.length / elementSize); // Multiple indices represent one primitive. We only consider first for sorting.
+                let cur = -1;
                 // Calculate squared distance cam--point for all starting points
-                for (var k = 0; k < distances.length; k++) {
+                for (let k = 0; k < distances.length; k++) {
                     cur = 3 * ind[elementSize * k];
                     distances[k] =
                         Math.pow(pos[cur] - camPos.x, 2) +
@@ -1898,8 +1883,8 @@ export default class Linus {
 
                 // Retrieve a sorted index list from the list of distances (as described in:
                 // https://stackoverflow.com/questions/3730510/javascript-sort-array-and-return-an-array-of-indicies-that-indicates-the-positi )
-                var sorted = new Int32Array(distances.length);
-                for (var l = 0; l < distances.length; ++l) sorted[l] = l;
+                let sorted = new Int32Array(distances.length);
+                for (let l = 0; l < distances.length; ++l) sorted[l] = l;
 
                 console.log("Sort");
 
@@ -1935,8 +1920,8 @@ export default class Linus {
                 }
 
                 // Finally copy the sorted indices and tell THREE.js to update the geometry
-                for (var l = 0; l < sorted.length; l++) {
-                    for (var k = 0; k < elementSize; k++) {
+                for (let l = 0; l < sorted.length; l++) {
+                    for (let k = 0; k < elementSize; k++) {
                         ind[elementSize * l + k] =
                             indCopy[elementSize * sorted[l] + k];
                     }
@@ -1948,7 +1933,7 @@ export default class Linus {
             }
         }
 
-        var t1 = performance.now();
+        let t1 = performance.now();
         //console.log("Squaring time: ", t0a - t0)
         //console.log("Sorting time: ", t1 - t0)
         this.lastSort = Date.now();
@@ -1974,9 +1959,9 @@ export default class Linus {
 
     // https://stackoverflow.com/questions/1484506/random-color-generator
     getRandomColor() {
-        var letters = "0123456789ABCDEF";
-        var color = "#";
-        for (var i = 0; i < 6; i++) {
+        let letters = "0123456789ABCDEF";
+        let color = "#";
+        for (let i = 0; i < 6; i++) {
             color += letters[Math.floor(Math.random() * 16)];
         }
         return color;
@@ -1999,20 +1984,20 @@ export default class Linus {
         );
 
         if (!this.webVr) {
-            var cameraLinks = document.createElement("div");
-            var cameraLinksTag = document.createElement("div");
+            let cameraLinks = document.createElement("div");
+            let cameraLinksTag = document.createElement("div");
             cameraLinksTag.innerHTML = "Reset camera";
             cameraLinksTag.classList.add("guiTag");
             cameraLinks.appendChild(cameraLinksTag);
 
-            var directions = ["+x", "-x", "+y", "-y", "+z", "-z"];
-            for (var i = 0; i < directions.length; i++) {
-                var cameraLink = document.createElement("a");
-                var d = directions[i];
+            let directions = ["+x", "-x", "+y", "-y", "+z", "-z"];
+            for (let i = 0; i < directions.length; i++) {
+                let cameraLink = document.createElement("a");
+                let d = directions[i];
                 cameraLink.href = "#";
                 cameraLink.classList.add("resetCamLink");
                 cameraLink.innerHTML = d;
-                var p = { context: this, d: d };
+                let p = { context: this, d: d };
                 cameraLink.onclick = function () {
                     this.context.setCamera(this.d);
                 }.bind(p);
@@ -2020,18 +2005,18 @@ export default class Linus {
             }
             this.gui.addChild(cameraLinks);
 
-            var cameraRotateLinks = document.createElement("div");
-            var cameraRotateLinksTag = document.createElement("div");
+            let cameraRotateLinks = document.createElement("div");
+            let cameraRotateLinksTag = document.createElement("div");
             cameraRotateLinksTag.innerHTML = "Rotate camera";
             cameraRotateLinksTag.classList.add("guiTag");
             cameraRotateLinks.appendChild(cameraRotateLinksTag);
-            for (var i = 0; i < directions.length; i++) {
-                var cameraLink = document.createElement("a");
-                var d = directions[i];
+            for (let i = 0; i < directions.length; i++) {
+                let cameraLink = document.createElement("a");
+                let d = directions[i];
                 cameraLink.href = "#";
                 cameraLink.classList.add("resetCamLink");
                 cameraLink.innerHTML = d;
-                var p = { context: this, d: d };
+                let p = { context: this, d: d };
                 cameraLink.onclick = function () {
                     this.context.rotateCamera(this.d);
                 }.bind(p);
@@ -2060,7 +2045,7 @@ export default class Linus {
             function (val) {
                 // Also tell the items about the background color. We use this to fade elements to background color.
                 for (
-                    var setId = 0;
+                    let setId = 0;
                     setId < this.setsAndStates.length;
                     setId++
                 ) {
@@ -2113,25 +2098,25 @@ export default class Linus {
         }
 
         // Add dataset-specific properties, like a specific color for each dataset
-        for (var setId = 0; setId < this.setsAndStates.length; setId++) {
+        for (let setId = 0; setId < this.setsAndStates.length; setId++) {
             this.gui.addMainHeadline(
                 "Dataset " + (setId + 1) + ": " + this.setsAndStates[setId].name
             );
-            var name = setId + "_" + this.setsAndStates[setId].name;
-            var s = 1 / parseFloat(this.setsAndStates[setId].scale);
-            var start = 8; // Magic number, see above in the shader (color interpolation)
+            let name = setId + "_" + this.setsAndStates[setId].name;
+            let s = 1 / parseFloat(this.setsAndStates[setId].scale);
+            let start = 8; // Magic number, see above in the shader (color interpolation)
 
             // Here we add information for each attribute of the current dataset
-            for (var i = 0; i < this.dataAttributes.length; i++) {
+            for (let i = 0; i < this.dataAttributes.length; i++) {
                 if (this.dataAttributes[i].dataset !== setId) continue; // Only attributes of current dataset
 
                 this.gui.addHeadline(
                     "Attribute filter: " + this.dataAttributes[i].name
                 );
-                var name = i + ": " + this.dataAttributes[i].name;
+                let name = i + ": " + this.dataAttributes[i].name;
 
                 // Parameter object, for this specific attribute
-                var p = {};
+                let p = {};
                 p.name = name;
                 p.uniformName = this.cleanVarName(this.dataAttributes[i].name);
                 p.i = i;
@@ -2148,7 +2133,7 @@ export default class Linus {
                     parseFloat(this.dataAttributes[i].min),
                     function (val) {
                         this.uniforms[this.uniformName + "From"].value = val;
-                        var window = this.gui.getValue(
+                        let window = this.gui.getValue(
                             this.setId + "_" + this.name + "__Window"
                         );
                         // The next one will set the "max" value automatically if the window is non-zero
@@ -2188,7 +2173,7 @@ export default class Linus {
             }
 
             // Parameter object, for this data set
-            var p = {};
+            let p = {};
             p.niceColors = this.niceColors;
             p.niceColorsCopy = this.niceColorsCopy;
             p.colorMapMode = setId.toString() + "__Color map";
@@ -2639,15 +2624,15 @@ export default class Linus {
             false
         );
 
-        var exportLinkHolder = document.createElement("div");
+        let exportLinkHolder = document.createElement("div");
         exportLinkHolder.setAttribute("id", "exportLinkHolder");
-        var exportLink = document.createElement("a");
+        let exportLink = document.createElement("a");
         //exportLink.setAttribute("id", "exportLinkHolder");
         exportLink.innerHTML = "&bull; Download selection";
         exportLink.id = "exportButton";
         exportLink.href = "#";
         exportLink.onclick = this.exportSelection.bind(this);
-        var exportLinkStatus = document.createElement("span");
+        let exportLinkStatus = document.createElement("span");
         exportLinkStatus.style.marginLeft = "5px";
         exportLinkStatus.id = "exportButtonStatus";
         exportLinkHolder.appendChild(exportLink);
@@ -2703,15 +2688,15 @@ export default class Linus {
         } else if (this.clickingVrOnCanvas) {
             console.log("vr move", e.clientX, e.clientY);
             if (this.lastVrPosX != null && this.lastVrPosY != null) {
-                var diffX = e.clientX - this.lastVrPosX;
-                var diffY = e.clientY - this.lastVrPosY;
+                let diffX = e.clientX - this.lastVrPosX;
+                let diffY = e.clientY - this.lastVrPosY;
 
                 this.scene.children[0].rotation.y += 0.01 * diffX;
                 this.scene.children[0].rotation.x += 0.01 * diffY;
 
-                for (var i = 1; i < this.scene.children.length; i++) {
-                    var m = new Matrix4();
-                    var n = new Matrix4();
+                for (let i = 1; i < this.scene.children.length; i++) {
+                    let m = new Matrix4();
+                    let n = new Matrix4();
                     m.makeRotationY(0.01 * diffX);
                     n.makeRotationX(0.01 * diffY);
                     this.scene.children[i].position.sub(this.webVrDisplacement);
@@ -2730,51 +2715,51 @@ export default class Linus {
     // Handler of mouse release. Calculates the corner points of the selection in world space, also for near and far
     onmouseup(e) {
         if (this.div.hidden == 0) {
-            var ww =
+            let ww =
                 window.innerWidth ||
                 document.documentElement.clientWidth ||
                 document.body.clientWidth;
-            var hh =
+            let hh =
                 window.innerHeight ||
                 document.documentElement.clientHeight ||
                 document.body.clientHeight;
             this.y1 = hh - this.y1;
             this.y2 = hh - this.y2;
-            var normalizedX1 = (this.x1 / ww) * 2 - 1;
-            var normalizedY1 = (this.y1 / hh) * 2 - 1;
-            var normalizedX2 = (this.x2 / ww) * 2 - 1;
-            var normalizedY2 = (this.y2 / hh) * 2 - 1;
+            let normalizedX1 = (this.x1 / ww) * 2 - 1;
+            let normalizedY1 = (this.y1 / hh) * 2 - 1;
+            let normalizedX2 = (this.x2 / ww) * 2 - 1;
+            let normalizedY2 = (this.y2 / hh) * 2 - 1;
 
-            var fromX = Math.min(normalizedX1, normalizedX2);
-            var fromY = Math.max(normalizedY1, normalizedY2);
-            var toX = Math.max(normalizedX1, normalizedX2);
-            var toY = Math.min(normalizedY1, normalizedY2);
+            let fromX = Math.min(normalizedX1, normalizedX2);
+            let fromY = Math.max(normalizedY1, normalizedY2);
+            let toX = Math.max(normalizedX1, normalizedX2);
+            let toY = Math.min(normalizedY1, normalizedY2);
 
             console.log("Selection from", fromX, fromY, "to", toX, toY);
 
-            var scale = this.getScale();
-            var p1Near = new Vector3(fromX, fromY, -1)
+            let scale = this.getScale();
+            let p1Near = new Vector3(fromX, fromY, -1)
                 .unproject(this.camera)
                 .divideScalar(scale);
-            var p2Near = new Vector3(toX, fromY, -1)
+            let p2Near = new Vector3(toX, fromY, -1)
                 .unproject(this.camera)
                 .divideScalar(scale);
-            var p3Near = new Vector3(toX, toY, -1)
+            let p3Near = new Vector3(toX, toY, -1)
                 .unproject(this.camera)
                 .divideScalar(scale);
-            var p4Near = new Vector3(fromX, toY, -1)
+            let p4Near = new Vector3(fromX, toY, -1)
                 .unproject(this.camera)
                 .divideScalar(scale);
-            var p1Far = new Vector3(fromX, fromY, 1)
+            let p1Far = new Vector3(fromX, fromY, 1)
                 .unproject(this.camera)
                 .divideScalar(scale);
-            var p2Far = new Vector3(toX, fromY, 1)
+            let p2Far = new Vector3(toX, fromY, 1)
                 .unproject(this.camera)
                 .divideScalar(scale);
-            var p3Far = new Vector3(toX, toY, 1)
+            let p3Far = new Vector3(toX, toY, 1)
                 .unproject(this.camera)
                 .divideScalar(scale);
-            var p4Far = new Vector3(fromX, toY, 1)
+            let p4Far = new Vector3(fromX, toY, 1)
                 .unproject(this.camera)
                 .divideScalar(scale);
             this.checkPoints(
@@ -2814,8 +2799,8 @@ export default class Linus {
     // why we only use the (very general) onVrSelectStart/onVrSelectEnd to trigger our custom observer.
     onVrMoveObserver() {
         if (this.lastVrRotation !== null) {
-            var diffX = this.lastVrRotation.x - this.vrControls.rotation.x;
-            var diffY = this.lastVrRotation.y - this.vrControls.rotation.y;
+            let diffX = this.lastVrRotation.x - this.vrControls.rotation.x;
+            let diffY = this.lastVrRotation.y - this.vrControls.rotation.y;
 
             // minimize the chance that this.lastVrRotation has changed to null in the mean time
             if (this.clickingVrControllerButton) {
@@ -2850,13 +2835,13 @@ export default class Linus {
 
     // Get a plane formed by three points
     getPlane(p1, p2, p3) {
-        var v1 = new Vector3(p2.x, p2.y, p2.z); // = p2
+        let v1 = new Vector3(p2.x, p2.y, p2.z); // = p2
         v1.sub(p1); // = p2 - p1
-        var v2 = new Vector3(p2.x, p2.y, p2.z); // = p2
+        let v2 = new Vector3(p2.x, p2.y, p2.z); // = p2
         v2.sub(p3); // = p2 - p3
-        var n = new Vector3(v1.x, v1.y, v1.z);
+        let n = new Vector3(v1.x, v1.y, v1.z);
         n = n.cross(v2);
-        var d = p2.x * n.x + p2.y * n.y + p2.z * n.z;
+        let d = p2.x * n.x + p2.y * n.y + p2.z * n.z;
         return { a: n.x, b: n.y, c: n.z, d: -d };
     }
 
@@ -2868,9 +2853,9 @@ export default class Linus {
     // Show all elements
     makeAllElementsVisible() {
         this.currentSelection = {};
-        for (var i = 0; i < this.scene.children[0].children.length; i++) {
-            var k = this.scene.children[0].children[i].geometry.originIndex;
-            var newValues = JSON.parse(
+        for (let i = 0; i < this.scene.children[0].children.length; i++) {
+            let k = this.scene.children[0].children[i].geometry.originIndex;
+            let newValues = JSON.parse(
                 JSON.stringify(this.data.sets[i].entities[k])
             );
 
@@ -2883,7 +2868,7 @@ export default class Linus {
                 i
             ].geometry.attributes.drawIndex.needsUpdate = true;
             for (
-                var j = 0;
+                let j = 0;
                 j <
                 this.scene.children[0].children[i].geometry.totalLineId.length;
                 j++
@@ -2897,9 +2882,9 @@ export default class Linus {
 
     // Hide all elements
     makeAllElementsInvisible() {
-        for (var i = 0; i < this.scene.children[0].children.length; i++) {
+        for (let i = 0; i < this.scene.children[0].children.length; i++) {
             //this.scene.children[0].children[i].visible = false;
-            var newValues = this.createFilledArray(
+            let newValues = this.createFilledArray(
                 -1,
                 this.scene.children[0].children[i].geometry.attributes.drawIndex
                     .array.length
@@ -2916,19 +2901,19 @@ export default class Linus {
 
     // Get elements that are within that cube formed by p1, p2, p3, p4 (front face) and p5, p6, p7, p8 (back face)
     checkPoints(p1, p2, p3, p4, p5, p6, p7, p8) {
-        var plane1 = this.getPlane(p1, p2, p5);
-        var plane2 = this.getPlane(p2, p3, p6);
-        var plane3 = this.getPlane(p3, p4, p7);
-        var plane4 = this.getPlane(p4, p1, p8);
+        let plane1 = this.getPlane(p1, p2, p5);
+        let plane2 = this.getPlane(p2, p3, p6);
+        let plane3 = this.getPlane(p3, p4, p7);
+        let plane4 = this.getPlane(p4, p1, p8);
 
-        var clickedElements = [];
+        let clickedElements = [];
         this.currentSelection = {};
 
         // First we check which element is actually visible
-        var rememberVisible = {};
-        for (var i = 0; i < this.scene.children[0].children.length; i++) {
+        let rememberVisible = {};
+        for (let i = 0; i < this.scene.children[0].children.length; i++) {
             for (
-                var j = 0;
+                let j = 0;
                 j <
                 this.scene.children[0].children[i].geometry.attributes.drawIndex
                     .array.length;
@@ -2950,15 +2935,15 @@ export default class Linus {
 
         // Now we iterate over all elements (except for already "invisible" ones) and check
         // if they are part of the new selection
-        for (var i = 0; i < this.scene.children[0].children.length; i++) {
+        for (let i = 0; i < this.scene.children[0].children.length; i++) {
             for (
-                var j = 0;
+                let j = 0;
                 j <
                 this.scene.children[0].children[i].geometry.attributes.drawIndex
                     .array.length;
                 j++
             ) {
-                var lineId = this.scene.children[0].children[i].geometry
+                let lineId = this.scene.children[0].children[i].geometry
                     .totalLineId[j];
                 if (
                     rememberVisible[lineId] === undefined ||
@@ -2968,11 +2953,11 @@ export default class Linus {
                     // We have been here a moment ago
                     continue;
                 }
-                var x = this.scene.children[0].children[i].geometry.attributes
+                let x = this.scene.children[0].children[i].geometry.attributes
                     .position.array[3 * j + 0];
-                var y = this.scene.children[0].children[i].geometry.attributes
+                let y = this.scene.children[0].children[i].geometry.attributes
                     .position.array[3 * j + 1];
-                var z = this.scene.children[0].children[i].geometry.attributes
+                let z = this.scene.children[0].children[i].geometry.attributes
                     .position.array[3 * j + 2];
 
                 if (this.scene.children[0].children[i].selectable) {
@@ -3009,22 +2994,22 @@ export default class Linus {
         this.makeAllElementsInvisible();
         console.log("SelectionMap", selectionMap);
 
-        for (var i = 0; i < this.scene.children[0].children.length; i++) {
-            var k = this.scene.children[0].children[i].geometry.originIndex;
-            var newValues = this.createFilledArray(
+        for (let i = 0; i < this.scene.children[0].children.length; i++) {
+            let k = this.scene.children[0].children[i].geometry.originIndex;
+            let newValues = this.createFilledArray(
                 -1,
                 this.scene.children[0].children[i].geometry.attributes.drawIndex
                     .array.length
             );
 
             for (
-                var j = 0;
+                let j = 0;
                 j <
                 this.scene.children[0].children[i].geometry.attributes.drawIndex
                     .array.length;
                 j++
             ) {
-                var lineId = this.scene.children[0].children[i].geometry
+                let lineId = this.scene.children[0].children[i].geometry
                     .totalLineId[j];
                 if (selectionMap[lineId] !== undefined) {
                     newValues[j] = this.data.sets[i].entities[k][j]; //this.scene.children[0].children[i].visible = true;;
@@ -3045,27 +3030,27 @@ export default class Linus {
     }
 
     disableExportButton() {
-        var e = document.getElementById("exportButton");
+        let e = document.getElementById("exportButton");
         e.style.opacity = 0.5;
         e.style.cursor = "default";
         e.onclick = 0;
     }
 
     enableExportButtonAndHideStatus() {
-        var e = document.getElementById("exportButton");
+        let e = document.getElementById("exportButton");
         e.style.opacity = 1;
         e.style.cursor = "pointer";
         e.onclick = this.exportSelection.bind(this);
-        var e2 = document.getElementById("exportButtonStatus");
+        let e2 = document.getElementById("exportButtonStatus");
         e2.innerHTML = "";
     }
 
     getExportLine(data, entity, index, dim) {
-        var code = "";
-        for (var i = 0; i < dim; i++) {
+        let code = "";
+        for (let i = 0; i < dim; i++) {
             code += data.positions[entity][index * dim + i] + ";";
         }
-        for (var i = 0; i < data.attributes.length; i++) {
+        for (let i = 0; i < data.attributes.length; i++) {
             // They may not exist or be incomplete, if data is shared
             if (data.attributes[i].values === undefined) continue;
             if (data.attributes[i].values.length <= entity) continue;
@@ -3077,12 +3062,12 @@ export default class Linus {
     }
 
     getExportHeader(data, entity, dim) {
-        var code = "";
-        var dims = ["x", "y", "z", "w"];
-        for (var i = 0; i < dim; i++) {
+        let code = "";
+        let dims = ["x", "y", "z", "w"];
+        for (let i = 0; i < dim; i++) {
             code += dims[i] + ";";
         }
-        for (var i = 0; i < data.attributes.length; i++) {
+        for (let i = 0; i < data.attributes.length; i++) {
             // They may not exist or be incomplete, if data is shared
             if (data.attributes[i].values === undefined) continue;
             if (data.attributes[i].values.length <= entity) continue;
@@ -3103,31 +3088,31 @@ export default class Linus {
     }
 
     exportPrepareData() {
-        var selectionMap = this.currentSelection;
-        var sets = [];
-        var dim = 3;
+        let selectionMap = this.currentSelection;
+        let sets = [];
+        let dim = 3;
 
-        for (var i = 0; i < this.data.sets.length; i++) {
+        for (let i = 0; i < this.data.sets.length; i++) {
             console.log("Iterate over data sets ... now set ", i);
-            var set = {};
+            let set = {};
             set.name = i + "_" + this.data.sets[i].name;
-            var numIndices = 2;
+            let numIndices = 2;
             if (this.data.sets[i].type !== "lines") continue; // TODO currently only export of lines
             set.states = [];
             let counter = 0;
-            for (var j = 0; j < this.data.sets[i].states.length; j++) {
+            for (let j = 0; j < this.data.sets[i].states.length; j++) {
                 console.log("Iterate over data set states ... now state ", j);
-                var state = {};
+                let state = {};
                 state.name = j + "_" + this.data.sets[i].states[j].name;
                 let indexPos = 0;
                 let lastIndex = -1;
                 state.elements = [];
-                for (var k = 0; k < this.data.sets[i].entities.length; k++) {
-                    var skip = false;
-                    var lastEntity = -1;
-                    var code = "";
+                for (let k = 0; k < this.data.sets[i].entities.length; k++) {
+                    let skip = false;
+                    let lastEntity = -1;
+                    let code = "";
                     for (
-                        var m = 1;
+                        let m = 1;
                         m < this.data.sets[i].indices[k].length;
                         m++
                     ) {
@@ -3149,7 +3134,7 @@ export default class Linus {
                                 100
                             );
                             skip = false;
-                            var lineId =
+                            let lineId =
                                 i.toString() +
                                 "_" +
                                 this.data.sets[i].entities[k][index].toString();
@@ -3200,21 +3185,22 @@ export default class Linus {
     // since the text can have multiple megabytes...
     exportSelection() {
         this.disableExportButton();
-        var data = this.exportPrepareData();
-        var filename = "export" + this.getExportFileName() + ".zip";
+        let data = this.exportPrepareData();
+        let filename =
+            "export" + this.exportHandler.getExportFileName() + ".zip";
         this.downloadZippedCsv(filename, data);
     }
 
     downloadZippedCsv(filename, data) {
-        var zip = new JSZip();
-        for (var set = 0; set < data.length; set++) {
-            var setFolder = zip.folder(data[set].name);
-            for (var state = 0; state < data[set].states.length; state++) {
-                var stateFolder = setFolder.folder(
+        let zip = new JSZip();
+        for (let set = 0; set < data.length; set++) {
+            let setFolder = zip.folder(data[set].name);
+            for (let state = 0; state < data[set].states.length; state++) {
+                let stateFolder = setFolder.folder(
                     data[set].states[state].name
                 );
                 for (
-                    var i = 0;
+                    let i = 0;
                     i < data[set].states[state].elements.length;
                     i++
                 ) {
@@ -3239,188 +3225,19 @@ export default class Linus {
         ).then(
             function (content) {
                 console.log("Create downloadable file");
-                FileSaver.saveAs(content, filename);
+                this.exportHandler.downloadRaw(filename, content);
                 this.enableExportButtonAndHideStatus();
             }.bind(this)
         );
     }
 
-    disableScreenshotButton() {
-        var e = document.getElementById("screenshotButton");
-        e.style.opacity = 0.5;
-        e.style.cursor = "default";
-        e.onclick = 0;
-    }
-
-    enableScreenshotButton() {
-        var e = document.getElementById("screenshotButton");
-        e.style.opacity = 1;
-        e.style.cursor = "pointer";
-        e.onclick = this.screenshot.bind(this);
-    }
-
-    getExportFileName() {
-        let date = new Date();
-        var dateString =
-            date.getFullYear() +
-            "-" +
-            (1 + date.getMonth()) +
-            "-" +
-            date.getDate() +
-            "--" +
-            date.getHours() +
-            "-" +
-            ("00" + date.getMinutes()).slice(-2) +
-            "-" +
-            date.getSeconds();
-
-        return dateString;
-    }
-
-    screenshot() {
-        this.disableScreenshotButton();
-        //var dataURL = this.canvas.toDataURL('image/png');
-        this.renderer.domElement.toBlob(
-            function (blob) {
-                FileSaver.saveAs(
-                    blob,
-                    "screenshot-" + this.getExportFileName() + ".png"
-                );
-                this.enableScreenshotButton();
-            }.bind(this),
-            "image/png"
-        );
-    }
-
-    video() {
-        if (this.isVideoRecording) {
-            this.stopRecording();
-        } else {
-            this.startRecording();
-        }
-    }
-
-    startRecording() {
-        this.videoTime = Date.now();
-        this.isVideoRecording = true;
-        var options = {
-            mimeType: this.videoFormat,
-            videoBitsPerSecond: parseInt(this.videoBitrate),
-        };
-        console.log("options", options);
-        this.recordedBlobs = [];
-        try {
-            this.mediaRecorder = new MediaRecorder(
-                this.renderer.domElement.captureStream(),
-                options
-            );
-        } catch (e0) {
-            console.log(
-                "Unable to create MediaRecorder with options Object: ",
-                e0
-            );
-            try {
-                this.videoFormat = "video/webm,codecs=vp9";
-                options.mimeType = this.videoFormat;
-                this.mediaRecorder = new MediaRecorder(
-                    this.renderer.domElement.captureStream(),
-                    options
-                );
-            } catch (e1) {
-                console.log(
-                    "Unable to create MediaRecorder with options Object: ",
-                    e1
-                );
-                try {
-                    this.videoFormat = "video/vp8";
-                    options = "video/vp8"; // Chrome 47
-                    this.mediaRecorder = new MediaRecorder(
-                        this.renderer.domElement.captureStream(),
-                        options
-                    );
-                } catch (e2) {
-                    alert(
-                        "MediaRecorder is not supported by this browser.\n\n" +
-                            "Try Firefox 29 or later, or Chrome 47 or later, " +
-                            "with Enable experimental Web Platform features enabled from chrome://flags."
-                    );
-                    console.error(
-                        "Exception while creating MediaRecorder:",
-                        e2
-                    );
-                    return;
-                }
-            }
-        }
-        console.log(
-            "Created MediaRecorder",
-            this.mediaRecorder,
-            "with options",
-            options
-        );
-
-        this.mediaRecorder.onstop = this.handleStop.bind(this);
-        this.mediaRecorder.ondataavailable = this.handleDataAvailable.bind(
-            this
-        );
-        this.mediaRecorder.start(100); // collect 100ms of data
-        console.log("MediaRecorder started", this.mediaRecorder);
-    }
-
-    stopRecording() {
-        this.mediaRecorder.stop();
-    }
-
-    handleStop() {
-        console.log("Stop");
-        this.downloadVideo();
-        this.isVideoRecording = false;
-    }
-
-    handleDataAvailable() {
-        console.log("Receive video data...");
-        if (event.data && event.data.size > 0) {
-            this.recordedBlobs.push(event.data);
-        }
-        var time = parseInt((Date.now() - this.videoTime) / 1000);
-        document.getElementById("videoButton").innerHTML =
-            "&#x25a0; - " + time + "s";
-    }
-
-    downloadVideo() {
-        const blob = new Blob(this.recordedBlobs, {
-            type: this.videoFormatExport,
-        });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.style.display = "none";
-        a.href = url;
-        a.download = "video-" + this.getExportFileName() + ".webm";
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => {
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-            // When everything is done, change button back
-            document.getElementById("videoButton").innerHTML = "&#x25cf;";
-        }, 100);
-    }
-
-    // TODO: find a reasonable/acceptable way to download or display the text representing the filtered data
-    downloadText(filename, text) {
-        var blob = new File([text], "data.json", {
-            type: "text/plain;charset=utf-8",
-        });
-        FileSaver.saveAs(blob);
-    }
-
     setCamera(v) {
         console.log(v);
         this.controls.reset();
-        var d = 2;
-        var x = v === "+x" ? d : v === "-x" ? -d : 0;
-        var y = v === "+y" ? d : v === "-y" ? -d : 0;
-        var z = v === "+z" ? d : v === "-z" ? -d : 0;
+        let d = 2;
+        let x = v === "+x" ? d : v === "-x" ? -d : 0;
+        let y = v === "+y" ? d : v === "-y" ? -d : 0;
+        let z = v === "+z" ? d : v === "-z" ? -d : 0;
 
         // Bug of OrbitControls: camera on y axis means a freeze of controls
         if (y !== 0) x = 0.0000001;
@@ -3433,8 +3250,8 @@ export default class Linus {
     }
 
     rotateCamera(v) {
-        var m = new Matrix4();
-        var d = (5 / 180) * Math.PI;
+        let m = new Matrix4();
+        let d = (5 / 180) * Math.PI;
         switch (String(v)) {
             case "+x":
                 m.makeRotationX(d);
@@ -3467,7 +3284,7 @@ export default class Linus {
         if (event.target.tagName.toLowerCase() == "input") {
             return false;
         }
-        var keyCode = event.which;
+        let keyCode = event.which;
         console.log("Button " + keyCode);
         if (keyCode == 83) {
             this.pressingButton = true;
@@ -3479,7 +3296,7 @@ export default class Linus {
 
     // Define the trigger button release
     onDocumentKeyUp(event) {
-        var keyCode = event.which;
+        let keyCode = event.which;
         console.log("Done with " + keyCode);
         if (keyCode == 83) {
             this.pressingButton = false;
@@ -3507,7 +3324,7 @@ export default class Linus {
     // Update the loading bar. TODO: doesn't seem to work - maybe no DOM updates during script load?
     // Current solution: write update to title. This one always updates.
     setStatus(from, to, now, message) {
-        var p = (100 * (now - from)) / (to - from);
+        let p = (100 * (now - from)) / (to - from);
         document.title =
             Math.round(p) + "% " + message + " - " + this.actualTitle;
     }

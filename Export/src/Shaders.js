@@ -1,5 +1,7 @@
 export default class Shaders {
-
+    /**
+     * Raw vertex shader with placeholders
+     */
     vertexShader() {
         return `
 #genericUniforms#
@@ -159,33 +161,43 @@ void main()
     {
         vCenter = (projectionMatrix * modelViewMatrix * vec4(0., 0., 0., 1.)).xyz;
     }
-}`
+}`;
     }
 
-
-
+    /**
+     * Vertex shader with adaptions for lines
+     */
     vertexShaderLine() {
-        let vertexShaderLineVars = ""
-        let vertexShaderLineNormal = "vView = normalize(vPosition - 1000. * cameraPosition);\n" +
+        let vertexShaderLineVars = "";
+        let vertexShaderLineNormal =
+            "vView = normalize(vPosition - 1000. * cameraPosition);\n" +
             "vec3 biNormal = normalize(cross(vView, vOrientation));\n" +
             "vNormal = cross( biNormal, vOrientation );\n" +
             "vNormal *= sign( dot( vNormal, vec3( 0.0, 0.0, 1.0 ) ) );\n" +
             "vNormal *= sign( dot( vNormal, vView ) );\n" +
-            "vNormal *= -1.;\n"
-        return this.vertexShader().replace("#customVars#", vertexShaderLineVars).replace(
-            "#customNormal#", vertexShaderLineNormal);
+            "vNormal *= -1.;\n";
+        return this.vertexShader()
+            .replace("#customVars#", vertexShaderLineVars)
+            .replace("#customNormal#", vertexShaderLineNormal);
     }
 
+    /**
+     * Vertex shader with adaptions for triangles
+     */
     vertexShaderTriangle() {
-        let vertexShaderTriangleVars = "attribute vec3 normalCustom;"
-        let vertexShaderTriangleNormal = "vNormal = normalCustom;\n" +
-            "vView = normalize(vPosition - 1000. * cameraPosition);\n"
+        let vertexShaderTriangleVars = "attribute vec3 normalCustom;";
+        let vertexShaderTriangleNormal =
+            "vNormal = normalCustom;\n" +
+            "vView = normalize(vPosition - 1000. * cameraPosition);\n";
 
-        return this.vertexShader().replace("#customVars#", vertexShaderTriangleVars).replace(
-            "#customNormal#", vertexShaderTriangleNormal);
+        return this.vertexShader()
+            .replace("#customVars#", vertexShaderTriangleVars)
+            .replace("#customNormal#", vertexShaderTriangleNormal);
     }
 
-
+    /**
+     * Fragment shader, used for both line and triangle fragments
+     */
     fragmentShader() {
         return `
 #genericUniforms#
@@ -331,6 +343,6 @@ void main()
     {
         discard;
     }
-}`
+}`;
     }
 }
