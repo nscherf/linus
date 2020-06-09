@@ -569,7 +569,7 @@ export default class LinusTourEditor {
         playButton.onclick = function() {
             this.previewSituation(currentIndex)
         }.bind(this);
-        timer.appendChild(playButton)
+        // timer.appendChild(playButton)
 
         return timer
     }
