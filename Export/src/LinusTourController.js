@@ -27,7 +27,7 @@ export default class LinusTourController {
         this.tours = {};
 
         // Tour editor (to create or edit tours)
-        this.tourEditor = new LinusTourEditor(linus, gui);
+        this.tourEditor = new LinusTourEditor(linus, gui, this.tourPreview.bind(this));
         this.isShowingEditor = false;
     }
 
@@ -80,6 +80,12 @@ export default class LinusTourController {
         }
 
         this.gui.addChild(tourList);
+    }
+
+    tourPreview(code) {
+        console.log("Received preview code", code)
+        this.gui.loadDefaults();
+        this.startTourByString(code, false);
     }
 
     /**
@@ -171,6 +177,11 @@ export default class LinusTourController {
         else this.startTour(name, repeat);
     }
 
+    startTour(name, repeat = true) {
+        console.log("Tour", name);
+        this.startTourByString(this.tours[name], repeat);
+    }
+
     /**
      * Opens a tour from the internal tour list. The tour is compiled
      * line by line. Each line contains the command for one of the following:
@@ -181,9 +192,8 @@ export default class LinusTourController {
      *
      * If the tour should be repeated, this function will re-call itself.
      */
-    startTour(name, repeat = true) {
-        console.log("Tour", name);
-        let tourString = this.tours[name];
+    startTourByString(tourString, repeat = true) {
+        console.log("Start tour", tourString);
         this.resetTourTimer();
         this.gui.hide();
         let tourCommands = tourString.split("\n");
@@ -226,7 +236,7 @@ export default class LinusTourController {
         if (repeat && this.timer > 0) {
             setTimeout(
                 function () {
-                    this.startTour(name);
+                    this.startTourByString(tourString);
                 }.bind(this),
                 this.timer
             );

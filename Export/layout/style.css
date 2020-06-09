@@ -146,20 +146,24 @@ li:hover {
     width: 30px;
 }
 
-#tourCreator button {
+button {
     cursor: pointer;
     display: inline-block;
     color: #333333;
     border: 0px;
-    border-radius: 2px;
+    border-radius: 0px;
     background: rgba(255, 255, 255, 0.8);
     text-align: center;
     margin: 1px;
     padding: 2px 10px;
 }
 
-#tourCreator button:hover {
+button:hover {
     opacity: 0.8;
+}
+
+button:active {
+    border: 0px;
 }
 
 #tourCreator input {

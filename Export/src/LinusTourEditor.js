@@ -6,19 +6,22 @@ import { default as Qrious } from '../includes/qrious.js'
  * Handles the toolbox to create a tour
  */
 export default class LinusTourEditor {
-    constructor(linus, gui) {
+    constructor(linus, gui, tourPreview) {
         this.linus = linus;
         this.gui = gui;
         this.camera = linus.camera;
         this.tourCreatorCheckedSettings = {};
         this.tourChangeCounter = 0;
+        this.tourPreviewCallback = tourPreview;
     }
+
+
 
     /**
      * Creates the tour URL and displays it in the respective box
      */
     prepareTourUrl() {
-        let code = this.createTourCode();
+        let code = this.createTourCodeUrl();
         document.getElementById("resultBox").textContent = code;
         document.getElementById("resultBox").select();
     }
@@ -27,7 +30,7 @@ export default class LinusTourEditor {
      * Creates the tour URL and displays it in the respective box
      */
     prepareTourQR() {
-        let code = this.createTourCode();
+        let code = this.createTourCodeUrl();
         console.log(code)
         let qr = new Qrious({
             value: code,
@@ -62,6 +65,11 @@ export default class LinusTourEditor {
         let buttonSelection = document.createElement("button")
         buttonSelection.onclick = this.addTourSelection.bind(this);
         buttonSelection.textContent = "Use selection"
+
+        
+        let buttonPreview = document.createElement("button")
+        buttonSelection.onclick = this.startPreview.bind(this);
+        buttonSelection.textContent = "Preview"
 
         let tourName = document.createElement("input")
         tourName.setAttribute("type", "text")
@@ -105,6 +113,10 @@ export default class LinusTourEditor {
         document.body.appendChild(father)
     }
 
+    startPreview() {
+        this.tourPreviewCallback(this.createTourCode())
+    }
+
     /**
      * Calculates the upwards direction of the current camera position
      */
@@ -121,15 +133,18 @@ export default class LinusTourEditor {
     /**
      * Converts all elements in the tour editor list into javascript function calls
      */
-    createTourCode() {
+    createTourCode(breakId = -1, ignoreTime = false) {
         let source = ""
         let list = document.getElementById("tourCreatorList")
         let items = list.getElementsByTagName("li");
-
         for (let i = 0; i < items.length; ++i) {
             let name = items[i].getElementsByClassName("tourItemName")[0].textContent
             let delay = items[i].getElementsByClassName("tourItemDelay")[0].value
             let duration = items[i].getElementsByClassName("tourItemDuration")[0].value
+            if(ignoreTime) {
+                delay = i / 1000.;
+                duration = 0;
+            }
             let isActive = !items[i].getElementsByClassName("tourItemCheckbox")[0].parentElement.parentElement.classList.contains("tourItemDisabled")
             if (!isActive) {
                 console.log("Skip element, it's inactive!")
@@ -167,7 +182,16 @@ export default class LinusTourEditor {
                 let value = items[i].getElementsByClassName("tourItemValue")[0].value
                 source += delay + "~fade~" + "" + name + "~" + value + "~" + duration + "\n";
             }
+
+            if(items[i].getAttribute("id") == breakId) {
+                break;
+            }
         }
+        return source;
+    }
+
+    createTourCodeUrl() {
+        let source = this.createTourCode();
         let url = new URL(window.location.href);
         url.searchParams.delete("editor");
         url.searchParams.delete("tour");
@@ -420,17 +444,24 @@ export default class LinusTourEditor {
      * Have a look at all settings that have changed and add them to the tour editor
      */
     addTourState() {
+        console.log("add tour state")
         let keys = Object.keys(this.gui.values);
         for (let i = 0; i < keys.length; i++) {
+            console.log("check", i)
+
             if (this.tourCreatorCheckedSettings[keys[i]] !== undefined) {
                 if (this.tourCreatorCheckedSettings[keys[i]] != this.gui.values[keys[i]]) {
                     console.log("Entry ", keys[i], " has changed")
                     this.addTourChange(null, keys[i], this.gui.values[keys[i]])
                 }
             }
-            else {
+            else if (this.gui.hasChanged(keys[i])) {
                 console.log("Entry ", keys[i], " is new")
+                console.log(this.gui.values[keys[i]])
+                console.log(this.gui.defaultValues[keys[i]])
                 this.addTourChange(null, keys[i], this.gui.values[keys[i]])
+            }
+            else {
             }
         }
         this.tourCreatorCheckedSettings = JSON.parse(JSON.stringify(this.gui.values))
@@ -532,6 +563,20 @@ export default class LinusTourEditor {
         if (!hideDuration) timer.appendChild(unit2)
         timer.appendChild(document.createElement("br"))
 
+        let playButton = document.createElement("button");
+        playButton.innerHTML = "play";
+        let currentIndex = "tourChange" + this.tourChangeCounter;
+        playButton.onclick = function() {
+            this.previewSituation(currentIndex)
+        }.bind(this);
+        timer.appendChild(playButton)
+
         return timer
     }
+    previewSituation(breakId) {
+        console.log("Preview situation", breakId)
+        let code = this.createTourCode(breakId, true)
+        this.tourPreviewCallback(code)
+    }
 }
+

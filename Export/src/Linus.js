@@ -53,7 +53,7 @@ export default class Linus {
         this.webVr = false; // Change camera and GUI (etc.) to comply with WebVR
 
         // A number of objects used by THREE.js.
-        this.backgroundColor = 0xdddddd;
+        this.backgroundColor = 0xe2e2e2;
         this.line = null;
         this.renderer = null;
         this.scene = null;
@@ -2058,6 +2058,19 @@ export default class Linus {
             false
         );
 
+        let resetDefault = document.createElement("div");
+        let resetDefaultTag = document.createElement("div");
+        resetDefaultTag.innerHTML = "Reset settings";
+        resetDefaultTag.classList.add("guiTag");
+        resetDefault.appendChild(resetDefaultTag);
+        var resetDefaultButton = document.createElement("button");
+        resetDefaultButton.innerHTML = "Load now"
+        resetDefaultButton.onclick = function() {
+            this.gui.loadDefaults();
+        }.bind(this)
+        resetDefault.append(resetDefaultButton);
+        this.gui.addChild(resetDefault);
+
         if (this.webVr) {
             this.gui.addFloat(
                 "VR Camera pos. x",
@@ -2638,6 +2651,7 @@ export default class Linus {
         exportLinkHolder.appendChild(exportLink);
         exportLinkHolder.appendChild(exportLinkStatus);
         this.gui.addChild(exportLinkHolder);
+        console.log("Default values", this.gui.defaultValues)
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
