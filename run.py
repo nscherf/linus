@@ -13,6 +13,7 @@ parser.add_argument("-csv", help="A folder containing (only) CSV files with trac
 parser.add_argument("-biotracks", help="The biotracks JSON file", default=None, nargs="?")
 parser.add_argument("-tgmm", help="A folder containing (only) TGMM files with tracks", default=None, nargs="?")
 parser.add_argument("-svf", help="A SVF (CSV-like) file", default=None, nargs="?")
+parser.add_argument("--addState2", help="Add another state (same type, same structure)", default=None, nargs="?")
 parser.add_argument("--stl", help="A stl file for context/background", default=None, nargs="?")
 parser.add_argument("--obj", help="An obj file for context/background", default=None, nargs="?")
 parser.add_argument("--addRadius", help="Create an attribute containing the radius (distance to center)", action='store_true', default=None)
@@ -37,6 +38,7 @@ args = parser.parse_args()
 csvPath = args.csv
 tgmmPath = args.tgmm
 svfPath = args.svf
+addState2 = args.addState2
 biotracksPath = args.biotracks
 stlPath = args.stl
 objPath = args.obj
@@ -55,20 +57,33 @@ csvSep = args.csvSep
 
 # Case 1: Use the command line interface
 loadFromCmd = tgmmPath != None or csvPath != None or biotracksPath != None or svfPath != None
+loaderState2 = None
 if loadFromCmd:
     if csvPath is not None:
         print("Load from CSV...")
         loader = dc.CsvLoader(csvPath, resampleTo=resampleTo, minTrackLength=skipSmallerThan, firstLineIsHeader=(csvNoHeader is None), csvSeparator=csvSep)
+        if addState2 is not None:
+            loaderState2 = dc.CsvLoader(addState2, resampleTo=resampleTo, minTrackLength=skipSmallerThan, firstLineIsHeader=(csvNoHeader is None), csvSeparator=csvSep)
     if tgmmPath is not None:
         print("Load from TGMM...")
         loader = dc.TgmmLoader(tgmmPath, resampleTo=resampleTo, minTrackLength=skipSmallerThan,)
+        if addState2 is not None:
+            loaderState2 = dc.TgmmLoader(addState2, resampleTo=resampleTo, minTrackLength=skipSmallerThan,)
+
     if biotracksPath is not None:
         print("Load from Biotracks...")
         loader = dc.BiotracksLoader(biotracksPath, resampleTo=resampleTo, minTrackLength=skipSmallerThan,)
+        if addState2 is not None:
+            loaderState2 = dc.BiotracksLoader(addState2, resampleTo=resampleTo, minTrackLength=skipSmallerThan,)
+
     if svfPath is not None:
         print("Load from SVF...")
         loader = dc.SvfLoader(svfPath, resampleTo=resampleTo, minTrackLength=skipSmallerThan, csvSeparator=csvSep)
+        if addState2 is not None:
+            loaderState2 = dc.SvfLoader(addState2, resampleTo=resampleTo, minTrackLength=skipSmallerThan, csvSeparator=csvSep)
+
     tracks, attributes, names = loader.get()
+
 
     # Start the track modifier that adjusts the data or adds attributes
     tm = dc.TrackModifier(tracks, attributes, names)
@@ -126,6 +141,10 @@ if loadFromCmd:
         bundler.runEdgeBundlingOpenCl()
         tracksBundled = bundler.getResult()
         wgb.addTrajectoryDatasetState(tracksBundled, "bundled")
+
+    if addState2 is not None:
+        tracks, attributes, names = loaderState2.get()
+        wgb.addTrajectoryDatasetState(tracks, "state2", attributes)
 
     # Output results
     wgb.setDecimalDigits(5)

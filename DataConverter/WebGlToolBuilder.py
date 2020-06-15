@@ -95,11 +95,11 @@ class WebGlToolBuilder:
         s["selectable"] = True
         self.data["sets"].append(s)
 
-    def addTrajectoryDatasetState(self, tracks, stateName):
+    def addTrajectoryDatasetState(self, tracks, stateName, attributes = []):
         """ Adds another state to the newest dataset. Note, the state must have identical
             number of tracks/positions as previous state. """
         state, lineIds, indices = self.exportJsonHelperState(
-            tracks, [], [], stateName, len(self.data["sets"][-1]["states"]))
+            tracks, attributes, [], stateName, len(self.data["sets"][-1]["states"]))
         self.data["sets"][-1]["states"].append(state)
 
     def writeJson(self, path, zipped):
