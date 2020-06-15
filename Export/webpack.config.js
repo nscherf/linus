@@ -9,7 +9,12 @@ module.exports = {
   },
   optimization: {
     minimize: true
-},
+  },
+  devServer: {
+    contentBase: path.join(__dirname, ''),
+    compress: true,
+    port: 9000
+  }
 };
 
 module.rules = [

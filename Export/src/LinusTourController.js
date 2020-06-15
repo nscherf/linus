@@ -84,6 +84,8 @@ export default class LinusTourController {
 
     tourPreview(code) {
         console.log("Received preview code", code)
+        this.resetTourTimer();
+        this.moveCameraTo(0, 0, 0, 2, 0, 1, 0, 0);
         this.gui.loadDefaults();
         this.startTourByString(code, false);
     }

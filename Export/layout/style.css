@@ -1,3 +1,8 @@
+:root {
+    --tourLineHeight: 80px;
+    --tourLineHeightHalf: 25px;
+  }
+
 body {
     background-color: rgb(224, 224, 224);
     margin: 0px;
@@ -46,6 +51,8 @@ a {
     -webkit-backdrop-filter: blur(25px);
     backdrop-filter: blur(25px);
     transition: width 1s;
+    resize:both;
+    overflow:auto; 
 }
 
 ul {
@@ -58,59 +65,39 @@ li:hover {
     cursor: default
 }
 
-.tourDragHandle {
-    font-weight: bold;
-    font-size: 15px;
-    margin-right: 5px;
-    cursor: move;
-    vertical-align: top;
-}
 
 .tourElement {
-    max-width: 170px;
+    position: relative;
     float: left;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    margin: 5px;
-    height: 115px;
-    padding: 5px;
-    border-radius: 5px;
+    border: 0px solid rgba(0, 0, 0, 0.1);
+    margin: 0px;
+    padding: 0px;
+
 }
 
-.tourElement::before {
-    position: absolute;
-    margin-left: 176px;
-    /* width plus margin plus border*/
-    margin-top: 50px;
-    content: "▶\00FE0E";
-    color: rgba(0, 0, 0, 0.2);
-}
 
 .tourElement:hover {
-    border: 1px solid rgba(255, 255, 255, 0.4);
+    border: 0px solid rgba(255, 255, 255, 0.4);
 }
 
 .tourChange {
-    background-color: #0073f9aa;
-    0073f9aa
+    background-color: transparent;
 }
 
 .tourCamera {
-    background-color: #5fbbc3aa;
+    background-color: transparent;
 }
 
 .tourSelection {
-    background-color: #df314eaa;
+    background-color: transparent;
 }
 
 .tourMarker {
-    background-color: #288f35aa;
+    background-color: transparent;
 }
 
 .tourItemName {
-    width: 100px;
-    margin-right: 15px;
-    margin-left: 15px;
-    display: inline-block;
+    max-width: 100px;
     overflow: hidden;
 }
 
@@ -119,17 +106,133 @@ li:hover {
 }
 
 .tourItemCheckbox {
-    display: inline-block;
-    width: 12px;
-    height: 12px;
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 14px;
+    height: 14px;
     border: 2px solid white;
     cursor: pointer;
     background-color: rgba(255, 255, 255, 0.5);
-    vertical-align: top;
+    transition: opacity, 0.2s;
+}
+.tourItemCheckbox:hover {
+    opacity: 0.5;
 }
 
+.tourDragHandle {
+    position: absolute;
+    left: 5px;
+    top: 7px;
+    width: 16px;
+    height: 16px;
+    border: 0px solid white;
+    cursor: move;
+    transition: opacity, 0.2s;
+}
+.tourDragHandle:hover {
+    opacity: 0.5;
+}
+
+.tourItemPreview {
+    cursor: pointer;
+    position: absolute;
+    top: 5px;
+    right: calc(25% + 5px);
+    width: 20px;
+    height: 20px;
+    border: 0px solid white;
+    transition: opacity, 0.2s;
+}
+
+.tourItemPreview:hover {
+    opacity: 0.5;
+}
+
+.tourItemOpenSettings {
+    cursor: pointer;
+    position: absolute;
+    top: 5px;
+    left: calc(25% + 5px);
+    width: 18px;
+    height: 18px;
+    border: 0px solid white;
+    transition: opacity, 0.2s;
+}
+.tourItemOpenSettings:hover {
+    opacity: 0.5;
+}
+
+.settingsHolder {
+    position: absolute;
+    display: block;
+    background-color: rgb(77, 75, 76);
+    z-index: 99;
+    padding: 0px;
+    height: 0px;
+    width: 0px;
+    overflow:hidden;
+    transition: height 0.3s, width 0.3s, padding 0.3s;
+}
+
+.tourElementContentArea {
+    width:200px;
+    margin: 5px;
+}
+.tourElementContentAreaShow {
+    height: 100px;
+    width: 200px;
+    padding: 4px;
+
+}
 .tourItemDisabled .tourItemCheckbox {
     background-color: transparent
+}
+.tourItemDelayBox {
+    margin-top: 10px;
+    position: relative;
+    display: inline-block;
+    min-width: 50px;
+    max-width: 200px;
+    height: var(--tourLineHeight);
+    background-color: rgba(92, 92, 92, 0.479);
+    vertical-align:top;
+    padding: 4px;
+}
+
+.tourItemDelayBox span {
+    display: inline-block;
+    margin-top: calc(var(--tourLineHeightHalf) - 10px);
+}
+.tourItemDelay{
+    vertical-align: middle;
+}
+.tourItemArrow {
+    margin-top: 10px;
+    margin-left: 3px;
+    margin-right: 3px;
+    position: relative;
+    display: inline-block;
+    padding:4px;
+    width: 10px;
+    height: var(--tourLineHeight);
+    vertical-align:top;
+}
+.tourItemControlArea {
+    margin-top: 10px;
+    position: relative;
+    display: inline-block;
+    height: var(--tourLineHeight);
+    min-width: 100px;
+    max-width: 300px;
+    background-color: rgba(39, 39, 39, 0.452);  
+    vertical-align:top;
+    padding: 4px;
+}
+
+.tourItemContentBox {
+    position: relative;
+    margin-top: 30px;
 }
 
 .tourItemDurationHeadline, .tourItemDelayHeadline {
@@ -167,8 +270,8 @@ button:active {
 }
 
 #tourCreator input {
-    border: 2px solid rgba(255, 255, 255, 1);
-    border-radius: 4px;
+    border: 0px solid rgba(255, 255, 255, 1);
+    border-radius: 2px;
     background: rgba(255, 255, 255, 0.1678);
     color: white;
 }
@@ -367,6 +470,10 @@ input[type=color] {
     border: none;
     height: 20px;
     width: 55%;
+}
+
+#resultBox {
+    margin-top: 10px;
 }
 
 /************************ Loading screen and selection marker ************************/

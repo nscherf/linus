@@ -68,8 +68,8 @@ export default class LinusTourEditor {
 
         
         let buttonPreview = document.createElement("button")
-        buttonSelection.onclick = this.startPreview.bind(this);
-        buttonSelection.textContent = "Preview"
+        buttonPreview.onclick = this.startPreview.bind(this);
+        buttonPreview.textContent = "Preview"
 
         let tourName = document.createElement("input")
         tourName.setAttribute("type", "text")
@@ -105,6 +105,7 @@ export default class LinusTourEditor {
         father.appendChild(buttonCamera)
         father.appendChild(buttonMarker)
         father.appendChild(buttonSelection)
+        father.appendChild(buttonPreview)
         father.appendChild(list)
         father.appendChild(resultBox)
         father.appendChild(qrLink)
@@ -254,18 +255,19 @@ export default class LinusTourEditor {
     addTourSelection(delay = null, selection = null, duration = null) {
         selection = selection == null ? JSON.stringify(this.linus.getSelection()) : selection;
         let father = document.getElementById("tourCreatorList")
-        let child = document.createElement("li")
-        child.setAttribute("id", "tourChange" + this.tourChangeCounter)
-        child.setAttribute("class", "tourElement tourSelection")
-        child.setAttribute("name", "tourChangeSelection")
+        let content = document.createElement("div")
+        content.setAttribute("class", "tourElementContentArea")
 
         let input = document.createElement("input")
         input.setAttribute("type", "hidden")
         input.setAttribute("class", "tourItemSelectionValue")
         input.setAttribute("value", selection)
-
-        child.appendChild(this.createBasicTourElements("Selection", delay, duration, true))
-        child.appendChild(input)
+        
+        content.appendChild(input)
+        let child = this.createBasicTourElements("Selection", delay, duration, content, true, true)
+        child.setAttribute("id", "tourChange" + this.tourChangeCounter)
+        child.setAttribute("class", "tourElement tourSelection")
+        child.setAttribute("name", "tourChangeSelection")
 
         this.tourChangeCounter++
         father.appendChild(child)
@@ -292,10 +294,8 @@ export default class LinusTourEditor {
         upZ = upZ == null ? up.z : upZ;
 
         let father = document.getElementById("tourCreatorList")
-        let child = document.createElement("li")
-        child.setAttribute("id", "tourChange" + this.tourChangeCounter)
-        child.setAttribute("class", "tourElement tourCamera")
-        child.setAttribute("name", "tourChangeCamera")
+        let content = document.createElement("div")
+        content.setAttribute("class", "tourElementContentArea")
 
         let headlineX = document.createElement("span")
         headlineX.textContent = "x: "
@@ -304,9 +304,6 @@ export default class LinusTourEditor {
         let headlineZ = document.createElement("span")
         headlineZ.textContent = "z: "
 
-
-
-        child.appendChild(this.createBasicTourElements("Camera", delay, duration))
 
         let inputX = document.createElement("input")
         inputX.setAttribute("type", "number")
@@ -326,12 +323,12 @@ export default class LinusTourEditor {
         inputZ.setAttribute("title", "z coordinate in world space, which is roughly in range [2,2]")
         inputZ.setAttribute("value", z)
 
-        child.appendChild(headlineX)
-        child.appendChild(inputX)
-        child.appendChild(headlineY)
-        child.appendChild(inputY)
-        child.appendChild(headlineZ)
-        child.appendChild(inputZ)
+        content.appendChild(headlineX)
+        content.appendChild(inputX)
+        content.appendChild(headlineY)
+        content.appendChild(inputY)
+        content.appendChild(headlineZ)
+        content.appendChild(inputZ)
 
         let headlineUpX = document.createElement("span")
         headlineUpX.textContent = "x: "
@@ -358,16 +355,20 @@ export default class LinusTourEditor {
         inputUpZ.setAttribute("title", "z coordinate in world space, which is roughly in range [2,2]")
         inputUpZ.setAttribute("value", upZ)
 
-        child.appendChild(document.createElement("br"))
-        child.appendChild(headlineUpX)
-        child.appendChild(inputUpX)
-        child.appendChild(headlineUpY)
-        child.appendChild(inputUpY)
-        child.appendChild(headlineUpZ)
-        child.appendChild(inputUpZ)
+        content.appendChild(document.createElement("br"))
+        content.appendChild(headlineUpX)
+        content.appendChild(inputUpX)
+        content.appendChild(headlineUpY)
+        content.appendChild(inputUpY)
+        content.appendChild(headlineUpZ)
+        content.appendChild(inputUpZ)
 
-        this.tourChangeCounter++
+        let child = this.createBasicTourElements("Camera", delay, duration, content, false)
+        child.setAttribute("id", "tourChange" + this.tourChangeCounter)
+        child.setAttribute("class", "tourElement tourCamera")
+        child.setAttribute("name", "tourChangeCamera")
         father.appendChild(child)
+        this.tourChangeCounter++
         let sortable = new Sortable(father, {/*onMove: this.createTourCode,*/ animation: 150, handle: '.tourDragHandle' });
     }
 
@@ -381,10 +382,8 @@ export default class LinusTourEditor {
         text = text == null ? "My marker content" : text;
 
         let father = document.getElementById("tourCreatorList")
-        let child = document.createElement("li")
-        child.setAttribute("id", "tourChange" + this.tourChangeCounter)
-        child.setAttribute("class", "tourElement tourMarker")
-        child.setAttribute("name", "tourChangeMarker")
+        let content = document.createElement("div")
+        content.setAttribute("class", "tourElementContentArea")
 
         let headline = document.createElement("span")
         headline.textContent = "Text: "
@@ -398,8 +397,6 @@ export default class LinusTourEditor {
 
         let headlineZ = document.createElement("span")
         headlineZ.textContent = "z: "
-
-        child.appendChild(this.createBasicTourElements("Marker", delay, duration))
 
         let inputX = document.createElement("input")
         inputX.setAttribute("type", "number")
@@ -424,17 +421,21 @@ export default class LinusTourEditor {
         inputText.setAttribute("class", "tourItemMarkerText")
         inputText.setAttribute("value", text)
 
-        child.appendChild(headline)
-        child.appendChild(inputText)
-        child.appendChild(document.createElement("br"))
+        content.appendChild(headline)
+        content.appendChild(inputText)
+        content.appendChild(document.createElement("br"))
 
-        child.appendChild(headlineX)
-        child.appendChild(inputX)
-        child.appendChild(headlineY)
-        child.appendChild(inputY)
-        child.appendChild(headlineZ)
-        child.appendChild(inputZ)
+        content.appendChild(headlineX)
+        content.appendChild(inputX)
+        content.appendChild(headlineY)
+        content.appendChild(inputY)
+        content.appendChild(headlineZ)
+        content.appendChild(inputZ)
 
+        let child = this.createBasicTourElements("Marker", delay, duration, content, false)
+        child.setAttribute("id", "tourChange" + this.tourChangeCounter)
+        child.setAttribute("class", "tourElement tourMarker")
+        child.setAttribute("name", "tourChangeMarker")
         this.tourChangeCounter++
         father.appendChild(child)
         let sortable = new Sortable(father, {/*onMove: this.createTourCode,*/ animation: 150, handle: '.tourDragHandle' });
@@ -476,14 +477,11 @@ export default class LinusTourEditor {
         value = value == null ? "" : value;
 
         let father = document.getElementById("tourCreatorList")
-        let child = document.createElement("li")
-        child.setAttribute("id", "tourChange" + this.tourChangeCounter)
-        child.setAttribute("class", "tourElement tourChange")
-        child.setAttribute("name", "tourChangeProperty")
+        let content = document.createElement("div")
+        content.setAttribute("class", "tourElementContentArea")
+
         console.log("Add parameter: ", this.gui.types[name])
         let noDuration = this.gui.types[name] != "float"
-        child.appendChild(this.createBasicTourElements(name, delay, duration, noDuration))
-
         let headline = document.createElement("span")
         headline.textContent = "Value: "
         headline.setAttribute("class", "tourItemValueHeadline");
@@ -494,9 +492,14 @@ export default class LinusTourEditor {
         input1.setAttribute("value", value)
         input1.setAttribute("id", "value")
 
-        child.appendChild(headline)
-        child.appendChild(input1)
+        content.appendChild(headline)
+        content.appendChild(input1)
 
+        let child = this.createBasicTourElements(name, delay, duration, content, noDuration)
+        child.setAttribute("id", "tourChange" + this.tourChangeCounter)
+        child.setAttribute("class", "tourElement tourChange")
+        child.setAttribute("name", "tourChangeProperty")
+        console.log("Add content")
         this.tourChangeCounter++
         father.appendChild(child)
         let sortable = new Sortable(father, {/*onMove: this.createTourCode,*/ animation: 150, handle: '.tourDragHandle' });
@@ -505,43 +508,76 @@ export default class LinusTourEditor {
     /**
      *  Creates the always-same basic elements: checkbox, delay, duration
      */
-    createBasicTourElements(name, delay = null, duration = null, hideDuration = false) {
+    createBasicTourElements(name, delay = null, duration, settings, hideDuration, hideSettings = false) {
+        let child = document.createElement("li")
+        child.setAttribute("class", "tourItemHolder")
+
+
         delay = ((delay == null) || isNaN(delay)) ? 1.000 : delay;
         duration = ((duration == null) || isNaN(duration)) ? 1.000 : duration;
 
-        let timer = document.createElement("span")
+        let mainContent = document.createElement("span")
+        mainContent.setAttribute("class", "tourItemControlArea")
         let headline1 = document.createElement("span")
         headline1.setAttribute("class", "tourItemDelayHeadline")
 
-        headline1.textContent = "Delay: "
-        let unit1 = document.createElement("span")
-        unit1.textContent = "s "
-        let headline2 = document.createElement("span")
-        headline2.textContent = "Duration: "
-        headline2.setAttribute("class", "tourItemDurationHeadline")
-
         let unit2 = document.createElement("span")
         unit2.textContent = "s "
-        let dragHandle = document.createElement("span")
+
+        let dragHandle = document.createElement("img")
         dragHandle.setAttribute("class", "tourDragHandle")
-        dragHandle.innerHTML = "&#9776;"
+        dragHandle.src = "./layout/symbols/hamburger.svg";
 
         let checkbox = document.createElement("span")
         checkbox.setAttribute("class", "tourItemCheckbox")
         checkbox.setAttribute("onclick", "this.parentElement.parentElement.classList.toggle('tourItemDisabled')");
         checkbox.innerHTML = "&nbsp;";
 
-        let headline = document.createElement("span")
-        headline.setAttribute("class", "tourItemName")
-        headline.textContent = name
+        let playButton = document.createElement("img");
+        playButton.setAttribute("class", "tourItemPreview")
+        playButton.src = "./layout/symbols/eye.svg";
+        let currentIndex = "tourChange" + this.tourChangeCounter;
+        playButton.onclick = function() {
+            this.previewSituation(currentIndex)
+        }.bind(this);
+        mainContent.appendChild(playButton)
 
+        let settingsHolder = document.createElement("div")
+        settingsHolder.setAttribute("class", "settingsHolder")
+        settingsHolder.appendChild(settings)
+        if(!hideSettings) {
+            let openSettingsButton = document.createElement("img");
+            openSettingsButton.setAttribute("class", "tourItemOpenSettings")
+            openSettingsButton.src = "./layout/symbols/edit.svg";
+            openSettingsButton.onclick = function() {
+                settingsHolder.classList.toggle('tourElementContentAreaShow')
+            }.bind(this);
+            mainContent.appendChild(openSettingsButton)
+        }
+
+        
+        let delayBox = document.createElement("span")
+        let delayBoxContent = document.createElement("span");
         let input1 = document.createElement("input")
+        let unit1 = document.createElement("span")
+        unit1.textContent = "s "
         input1.setAttribute("type", "number")
-        input1.setAttribute("class", "tourItemDelay")
         input1.setAttribute("min", "0")
         input1.setAttribute("max", "100000")
         input1.setAttribute("value", delay)
         input1.setAttribute("title", "delay in seconds after which this step should be performed")
+        input1.setAttribute("class", "tourItemDelay")
+        delayBoxContent.appendChild(input1)
+        delayBoxContent.appendChild(unit1)
+        delayBox.appendChild(delayBoxContent)
+        delayBox.setAttribute("class", "tourItemDelayBox")
+        
+        let contentBox = document.createElement("div")
+        contentBox.setAttribute("class", "tourItemContentBox")
+        let headline = document.createElement("span")
+        headline.setAttribute("class", "tourItemName")
+        headline.textContent = name
+        contentBox.appendChild(headline)
 
         let input2 = document.createElement("input")
         input2.setAttribute("type", hideDuration ? "hidden" : "number")
@@ -551,28 +587,33 @@ export default class LinusTourEditor {
         input2.setAttribute("value", duration)
         input2.setAttribute("title", "duration in seconds this step should take")
 
-        timer.appendChild(dragHandle)
-        timer.appendChild(checkbox)
-        timer.appendChild(headline)
-        timer.appendChild(headline1)
-        timer.appendChild(input1)
-        timer.appendChild(unit1)
-        if (!hideDuration) timer.appendChild(document.createElement("br"))
-        if (!hideDuration) timer.appendChild(headline2)
-        timer.appendChild(input2)
-        if (!hideDuration) timer.appendChild(unit2)
-        timer.appendChild(document.createElement("br"))
+        mainContent.appendChild(dragHandle)
+        mainContent.appendChild(checkbox)
+        if (!hideDuration) contentBox.appendChild(document.createElement("br"))
+        contentBox.appendChild(input2)
+        if (!hideDuration) contentBox.appendChild(unit2)
+        contentBox.appendChild(document.createElement("br"))
 
-        let playButton = document.createElement("button");
-        playButton.innerHTML = "play";
-        let currentIndex = "tourChange" + this.tourChangeCounter;
-        playButton.onclick = function() {
-            this.previewSituation(currentIndex)
-        }.bind(this);
-        // timer.appendChild(playButton)
+        contentBox.appendChild(settingsHolder)
+        mainContent.appendChild(contentBox);
 
-        return timer
+
+        let spacer1 = document.createElement("img");
+        spacer1.setAttribute("class", "tourItemArrow")
+        spacer1.src = "./layout/symbols/triangle.svg";
+
+        let spacer2 = document.createElement("img");
+        spacer2.src = "./layout/symbols/triangle.svg";
+        spacer2.setAttribute("class", "tourItemArrow")
+
+        child.appendChild(delayBox)
+        child.appendChild(spacer1)
+        child.appendChild(mainContent)
+        child.appendChild(spacer2)
+
+        return child
     }
+
     previewSituation(breakId) {
         console.log("Preview situation", breakId)
         let code = this.createTourCode(breakId, true)
