@@ -10,6 +10,7 @@ export default class Shaders {
 #customVars#
 
 attribute float setId;
+attribute float axeType;
 attribute float drawIndex;
 
 varying vec3 vOrientation;
@@ -21,6 +22,7 @@ varying vec3 vView;
 varying vec3 vCenter;
 varying float vDepth;
 varying float vSetId;
+varying float vAxeType;
 varying float vDrawIndex;
 varying float vDiscardThis;
 varying float vHideThis;
@@ -64,6 +66,7 @@ mat4 rotationMatrix(vec3 axis, float angle)
 void main() 
 {
     vSetId = setId;
+    vAxeType = axeType;
     vDrawIndex = drawIndex;
     // Define the state (for selected data), then calculate a position
     float stateInternal = drawIndex >= 0. ? state : defocusState;
@@ -212,6 +215,7 @@ varying vec3 vNormal;
 varying vec3 vView;
 varying vec3 vCenter;
 varying float vSetId;
+varying float vAxeType;
 varying float vDrawIndex;
 varying float vDepth;
 varying float vDiscardThis;
@@ -230,6 +234,8 @@ uniform float defocusAlpha;
 uniform float colorScale;
 uniform sampler2D colorMap;
 uniform int colorMapMode;
+uniform float axesTransparancy;
+uniform vec3 axesColor;
 
 
 float lightIntensity2(vec3 viewDir, vec3 normalDir)
@@ -281,6 +287,11 @@ vec4 getColor(float value, float alpha)
 
 void main() 
 {
+    if(vAxeType > 0.5) {
+        gl_FragColor = vec4(axesColor, axesTransparancy);
+        return;
+    }
+
     gl_FragColor = getColor(0., alpha);
 
     if(mode==1)

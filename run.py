@@ -27,6 +27,8 @@ parser.add_argument("--skipSmallerThan", help="Skips tracks that are smaller tha
 parser.add_argument("--resampleTo", help="Target track length (after resampling) (default: 50)", action='store', default=50)
 parser.add_argument("--csvNoHeader", help="By default, the first line is assumed to be a header. If table is full of numeric values, use this option.", action='store_true', default=None)
 parser.add_argument("--csvSep", help="Add the CSV separator you are using (default: ,)", action='store_true', default=",")
+parser.add_argument("--addXYZAxes", help="Add x,y,z axes",  action='store_true', default=None)
+parser.add_argument("--addCustomAxes", help="Add custom axes from a csv folder",  action='store_true', default=None)
 
 print("Prepare your trajectory data for a WebGL-based interactive visualization.")
 print("Please provide at least one data source. Find the result in ./Export/")
@@ -53,6 +55,8 @@ csvNoHeader = args.csvNoHeader
 skipSmallerThan = int(args.skipSmallerThan)
 resampleTo = int(args.resampleTo)
 csvSep = args.csvSep
+addXYZAxes = args.addXYZAxes
+addCustomAxes = args.addCustomAxes
 
 
 # Case 1: Use the command line interface
@@ -108,6 +112,7 @@ if loadFromCmd:
     if addAngle is not None:
         tm.addAttributeAngleToStart()
 
+
     tracks, attributes, names = tm.get()
 
     # Prepare the output
@@ -145,6 +150,9 @@ if loadFromCmd:
     if addState2 is not None:
         tracks, attributes, names = loaderState2.get()
         wgb.addTrajectoryDatasetState(tracks, "state2", attributes)
+
+    if addXYZAxes is not None:
+         wgb.addXYZAxes()
 
     # Output results
     wgb.setDecimalDigits(5)

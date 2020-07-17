@@ -78,7 +78,7 @@ export default class Linus {
         this.screenCapture = new ScreenCapture(this.exportHandler);
 
         // Own helpers
-        this.cameraUpdateCallback = function () {}; // A function that sets an updated camera position. Needed to avoid artifacts by parallelization
+        this.cameraUpdateCallback = function () { }; // A function that sets an updated camera position. Needed to avoid artifacts by parallelization
         this.recommendedScale = 1; // Dataset scale (will be set to something like 1 / width of dataset)
         this.setsAndStates = []; // Overview of all sets and their states of the imported data
         this.customUniforms = []; // Preprocessed information generated from the data set
@@ -925,32 +925,53 @@ export default class Linus {
         let elementSize = dim; // for lines, and triangles, since "dim" (e.g. 3) values(x,y,z) must stay together
         let numElements =
             this.data.sets[i].states[0].positions[k].length / elementSize;
+        let numElementsWithAxes = numElements + this.data.sets[i].axes.length / elementSize;
+        console.log("Axes", numElements, numElementsWithAxes)
         let geometry = new BufferGeometry();
 
         geometry.type = this.data.sets[i].type;
         geometry.originIndex = k;
-        let setIds = this.createFilledArray(i, numElements - 1);
-        let drawIndexValues = JSON.parse(
-            JSON.stringify(this.data.sets[i].entities[k])
-        ); // this.createFilledArray(1, numElements - 1)
+        let setIds = this.createFilledArray(i, numElementsWithAxes - 1);
+        let axeType = this.createFilledArray(0, numElements - 1);
+
+        let drawIndexValues = JSON.parse(JSON.stringify(this.data.sets[i].entities[k]));
+        let primitiveIndices = JSON.parse(JSON.stringify(this.data.sets[i].indices[k]));
+        
+
+        let positions = JSON.parse(JSON.stringify(this.data.sets[i].states[0].positions[k]));
+        for (let axeItem = 0; axeItem < this.data.sets[i].axes.length / elementSize; axeItem++) {
+            drawIndexValues.push(-1)
+            axeType.push(1)
+            for (let d = 0; d < dim; d++) {
+                positions.push(this.data.sets[i].axes[dim * axeItem + d])
+            }
+        }
+        for (let axeItem = 0; axeItem < this.data.sets[i].axesIndices.length; axeItem++) {
+            primitiveIndices.push(this.data.sets[i].axesIndices[axeItem] + numElements)
+        }
+
         geometry.setAttribute("setId", new Float32BufferAttribute(setIds, 1));
         geometry.setAttribute(
             "drawIndex",
             new Float32BufferAttribute(drawIndexValues, 1)
         );
 
+        geometry.setAttribute(
+            "axeType",
+            new Float32BufferAttribute(axeType, 1)
+        );
+
         // Make it twice (once here, once as attribute), otherwise three js problems
         geometry.setAttribute(
             "position",
             new Float32BufferAttribute(
-                this.data.sets[i].states[0].positions[
-                    k
-                ] /**.slice(dim * fr, dim * to)**/,
+                positions,
                 dim
             )
         );
 
-        geometry.setIndex(this.data.sets[i].indices[k]);
+
+        geometry.setIndex(primitiveIndices);
         this.numGlPrimitives += this.data.sets[i].indices[k].length / 2;
 
         for (
@@ -958,9 +979,11 @@ export default class Linus {
             j < numStates;
             j++ // States, starting from 1!!!
         ) {
-            let positions = this.data.sets[i].states[j].positions[
-                k
-            ]; /**.slice(dim * fr, dim * to)**/
+            let positions = JSON.parse(JSON.stringify(this.data.sets[i].states[j].positions[k]));
+            for (let axePos = 0; axePos < this.data.sets[i].axes.length; axePos++) {
+                positions.push(this.data.sets[i].axes[axePos])
+            }
+
             let last = [];
             for (let l = positions.length - dim; l < positions.length; l++) {
                 last.push(positions[l] + (positions[l] - positions[l - dim])); // It's a fake, one step further
@@ -993,9 +1016,16 @@ export default class Linus {
                     continue;
                 }
 
-                let values = this.data.sets[i].states[j].attributes[a].values[
+                let values = JSON.parse(JSON.stringify(this.data.sets[i].states[j].attributes[a].values[
                     k
-                ]; /**.slice(aDim * fr, aDim * to)**/
+                ])); 
+
+                for (let axePos = 0; axePos < this.data.sets[i].axes.length / elementSize; axePos++) {
+                    for(let fillDim = 0; fillDim < aDim; fillDim++) {
+                        values.push(0)
+                    }
+                }
+
                 if (shared == false) {
                     attName += j; // If we save all attributes, name them with number
                 }
@@ -1197,7 +1227,7 @@ export default class Linus {
             this.setStatus(
                 0,
                 this.data.sets[i].states.length *
-                    this.data.sets[i].states[0].positions.length,
+                this.data.sets[i].states[0].positions.length,
                 this.data.sets[i].states[0].positions.length * i + k,
                 "Preparing data"
             );
@@ -1208,6 +1238,11 @@ export default class Linus {
                 //Lines
                 geometry = this.addDataHelperLines(i, k, dim, numStates);
             }
+
+            if (this.data.sets[i].axes !== undefined) {
+                this.addAxes(i);
+            }
+
             objects.push(geometry);
         }
 
@@ -1233,6 +1268,10 @@ export default class Linus {
         );
 
         return objects;
+    }
+
+    addAxes(setId) {
+        console.log("Add axes for", setId)
     }
 
     // Checks the data's extra attributes (except for position/orientation) and creates variables for the shader
@@ -1338,6 +1377,8 @@ export default class Linus {
             mode: new Uniform(0),
             colorMapMode: new Uniform(0),
             colorMap: { value: 0 },
+            axesTransparancy: new Uniform(1),
+            axesColor: new Uniform(new Color(0x000000)),
             mercatorMode: new Uniform(0),
             mercatorRadius: new Uniform(0),
             lineColor: new Uniform(new Color(0xff003c)),
@@ -1677,7 +1718,7 @@ export default class Linus {
         this.camera2 = new PerspectiveCamera(
             50,
             document.getElementById("inset").offsetWidth /
-                document.getElementById("inset").offsetHeight,
+            document.getElementById("inset").offsetHeight,
             0.1,
             1000
         );
@@ -1902,8 +1943,8 @@ export default class Linus {
                             return distances[a] > distances[b]
                                 ? -1
                                 : distances[a] < distances[b]
-                                ? 1
-                                : 0;
+                                    ? 1
+                                    : 0;
                         });
                         //this.mergeSort(sorted, function (a, b) {return distances[a] > distances[b] ? -1 : 1; })
                     } else {
@@ -1912,8 +1953,8 @@ export default class Linus {
                             return distances[a] < distances[b]
                                 ? -1
                                 : distances[a] > distances[b]
-                                ? 1
-                                : 0;
+                                    ? 1
+                                    : 0;
                         });
                         //this.mergeSort(sorted, function (a, b) {return distances[a] < distances[b] ? -1 : 1; })
                     }
@@ -2041,7 +2082,7 @@ export default class Linus {
         this.gui.addColor(
             "Background color",
             "#" +
-                this.material[0].uniforms.backgroundColor.value.getHexString(),
+            this.material[0].uniforms.backgroundColor.value.getHexString(),
             function (val) {
                 // Also tell the items about the background color. We use this to fade elements to background color.
                 for (
@@ -2065,7 +2106,7 @@ export default class Linus {
         resetDefault.appendChild(resetDefaultTag);
         var resetDefaultButton = document.createElement("button");
         resetDefaultButton.innerHTML = "Load now"
-        resetDefaultButton.onclick = function() {
+        resetDefaultButton.onclick = function () {
             this.gui.loadDefaults();
         }.bind(this)
         resetDefault.append(resetDefaultButton);
@@ -2118,6 +2159,7 @@ export default class Linus {
             let name = setId + "_" + this.setsAndStates[setId].name;
             let s = 1 / parseFloat(this.setsAndStates[setId].scale);
             let start = 8; // Magic number, see above in the shader (color interpolation)
+
 
             // Here we add information for each attribute of the current dataset
             for (let i = 0; i < this.dataAttributes.length; i++) {
@@ -2205,6 +2247,39 @@ export default class Linus {
             p.updateInsetLabels = this.updateInsetLabels.bind(this);
             p.setScale = this.setScale.bind(this);
             p.colorMapTextures = this.colorMapTextures;
+
+            
+            if(this.data.sets[setId].axes.length > 0) {
+                // We also have axes to draw
+                this.gui.addHeadline(
+                    "Axes styling"
+                );
+
+                this.gui.addFloat(
+                    setId.toString() + "__Axes transparancy",
+                    0,
+                    1,
+                    1,
+                    function (val) {
+                        this.material.uniforms.axesTransparancy.value = val;
+                    }.bind(p)
+                );
+
+                this.gui.addColor(
+                    setId.toString() + "__Axes color",
+                    "#000000",
+                    function (val) {
+                        // Also tell the items about the background color. We use this to fade elements to background color.
+                        for (
+                            let setId = 0;
+                            setId < this.setsAndStates.length;
+                            setId++
+                        ) {
+                            this.material.uniforms.axesColor.value = new Color(val);
+                        }
+                    }.bind(p)
+                );
+            }
 
             this.gui.addHeadline("Render settings");
             this.gui.addSelection(
@@ -2940,7 +3015,7 @@ export default class Linus {
                 ) {
                     rememberVisible[
                         this.scene.children[0].children[i].geometry.totalLineId[
-                            j
+                        j
                         ]
                     ] = 1;
                 }
@@ -2990,7 +3065,7 @@ export default class Linus {
                 } else {
                     clickedElements.push(
                         this.scene.children[0].children[i].geometry.totalLineId[
-                            j
+                        j
                         ]
                     );
                     this.currentSelection[lineId] = 1;

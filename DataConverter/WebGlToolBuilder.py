@@ -12,6 +12,7 @@ class WebGlToolBuilder:
         self.data = {}
         self.data["dim"] = dim
         self.data["sets"] = []
+        self.max = [-999999, -999999, -999999]
         self.accuracy = 4
         self.useZip = True
 
@@ -44,6 +45,7 @@ class WebGlToolBuilder:
         state = {}
         state["name"] = stateName
         state["positions"] = [tracks.flatten().tolist()]
+        self.updateMaxValues(state["positions"])
         state["attributes"] = []
 
         if stateNumber == 0:  # because it's shared, only for the first
@@ -56,6 +58,54 @@ class WebGlToolBuilder:
                 state["attributes"][i]["values"] = [
                     attributes[:, :, i].flatten().tolist()]
         return state, lineIds, indices
+
+    def createAxe(self, dimension, start, end, steps, startIndex):
+        values = [0., 0., 0.]
+        positions = []
+        indices = []
+        lastIndex = 0
+
+        for i in range(steps):
+            values[dimension] = i / (steps - 1) * (end - start) + start
+            if i > 0:
+                lastIndex = i + startIndex
+                indices.append(lastIndex - 1)
+                indices.append(lastIndex)
+            for v in values:
+                positions.append(v)
+
+        step = 0.05
+        displaceDepth = 0.1
+        tickDisplace = [displaceDepth, displaceDepth, displaceDepth]
+        tickDisplace[dimension] = 0
+        counter = 0
+        for i in np.arange(step, end, step):
+            values[dimension] = i
+            indices.append(2 * counter + lastIndex + 1)
+            indices.append(2 * counter + lastIndex + 2)
+            for v in values:
+                positions.append(v)
+            for valueIndex in range(len(values)):
+                positions.append(values[valueIndex] - tickDisplace[valueIndex])
+            counter += 1
+        print("Number of ticks", counter)
+
+        return positions, indices
+
+    def addXYZAxes(self):
+        numElements = 100
+        positions, indices = self.createAxe(0, 0, self.max[0], numElements, 0)
+        self.data["sets"][0]["axes"] += positions
+        self.data["sets"][0]["axesIndices"] += indices
+
+        positions, indices = self.createAxe(1, 0, self.max[1], numElements, indices[-1] + 1)
+        self.data["sets"][0]["axes"] += positions
+        self.data["sets"][0]["axesIndices"] += indices
+
+        positions, indices = self.createAxe(2, 0, self.max[2], numElements, indices[-1] + 1)
+        self.data["sets"][0]["axes"] += positions
+        self.data["sets"][0]["axesIndices"] += indices
+
 
     def addTriangleDataset(self, positions, indices, normals, datasetName, scale):
         """ Create the JSON structure that is needed for the WebGL-Tool """
@@ -93,9 +143,17 @@ class WebGlToolBuilder:
         s["entities"] = [lineIds]
         s["indices"] = [indices]
         s["selectable"] = True
+        s["axes"] = []
+        s["axesIndices"] = []
         self.data["sets"].append(s)
 
-    def addTrajectoryDatasetState(self, tracks, stateName, attributes = []):
+    def updateMaxValues(self, positions):
+        for j in range(0, len(positions)):
+            for i in range(0, len(positions[j])):
+                k = i % self.data["dim"]
+                self.max[k] = max(self.max[k], positions[j][i])
+
+    def addTrajectoryDatasetState(self, tracks, stateName, attributes=[]):
         """ Adds another state to the newest dataset. Note, the state must have identical
             number of tracks/positions as previous state. """
         state, lineIds, indices = self.exportJsonHelperState(
