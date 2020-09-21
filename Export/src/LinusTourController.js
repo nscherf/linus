@@ -500,8 +500,12 @@ export default class LinusTourController {
         p.name = name;
         if (this.gui.types[p.name] == "float") {
             to = parseFloat(to);
+            p.type = "float"
+        } else if (this.gui.types[p.name] == "color")  {
+            p.type = "color"
         } else {
-            duration = 0; // For select or colors -> no animation
+            p.type = "selection"
+            duration = 0; 
         }
         p.to = to;
         p.duration = duration * this.timerSpeed;
@@ -517,6 +521,19 @@ export default class LinusTourController {
         );
         this.timer += duration * 1000 * this.timerSpeed;
     }
+    
+    interpolateColor(a, b, amount) {
+        // https://gist.github.com/rosszurowski/67f04465c424a9bc0dae
+        var ah = parseInt(a.replace(/#/g, ''), 16),
+        ar = ah >> 16, ag = ah >> 8 & 0xff, ab = ah & 0xff,
+        bh = parseInt(b.replace(/#/g, ''), 16),
+        br = bh >> 16, bg = bh >> 8 & 0xff, bb = bh & 0xff,
+        rr = ar + amount * (br - ar),
+        rg = ag + amount * (bg - ag),
+        rb = ab + amount * (bb - ab);
+
+        return '#' + ((1 << 24) + (rr << 16) + (rg << 8) + rb | 0).toString(16).slice(1);
+    }
 
     /**
      * Tour: helper that gets called after the user-specified delay
@@ -530,12 +547,17 @@ export default class LinusTourController {
         let numSteps = Math.max(0, fps * p.duration);
         let stepsize = (p.to - from) / numSteps;
 
-        // The next loop should only be executed for fadeable parameters
+        // The next loop should only be executedFse for fadeable parameters
         for (let i = 0; i < numSteps; i++) {
             let pp = {};
             pp.name = p.name;
             pp.gui = p.gui;
-            pp.value = from + i * stepsize;
+            console.log(p.type)
+            if(p.type == "float") {
+                pp.value = from + i * stepsize;
+            } else if(p.type == "color") {
+                pp.value = p.context.interpolateColor(from, p.to, i/numSteps)
+            }
             setTimeout(
                 function (p) {
                     p.gui.setValue(p.name, p.value);

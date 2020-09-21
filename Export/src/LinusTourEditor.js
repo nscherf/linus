@@ -179,7 +179,6 @@ export default class LinusTourEditor {
             }
             else {
                 console.log(name)
-
                 let value = items[i].getElementsByClassName("tourItemValue")[0].value
                 source += delay + "~fade~" + "" + name + "~" + value + "~" + duration + "\n";
             }
@@ -481,7 +480,7 @@ export default class LinusTourEditor {
         content.setAttribute("class", "tourElementContentArea")
 
         console.log("Add parameter: ", this.gui.types[name])
-        let noDuration = this.gui.types[name] != "float"
+        let noDuration = this.gui.types[name] != "float" && this.gui.types[name] != "color"
         let headline = document.createElement("span")
         headline.textContent = "Value: "
         headline.setAttribute("class", "tourItemValueHeadline");
