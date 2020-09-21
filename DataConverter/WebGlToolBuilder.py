@@ -3,7 +3,7 @@ import json
 import re
 import zlib
 import base64
-
+import math
 
 class WebGlToolBuilder:
     """ Tool to combine data in order to create a JSON file for the WebGL tool """
@@ -59,12 +59,12 @@ class WebGlToolBuilder:
                     attributes[:, :, i].flatten().tolist()]
         return state, lineIds, indices
 
-    def createAxe(self, dimension, start, end, steps, startIndex):
+    def createAxe(self, dimension, start, end, stepSize, startIndex):
         values = [0., 0., 0.]
         positions = []
         indices = []
         lastIndex = 0
-
+        steps = math.ceil((end - start) / stepSize)
         for i in range(steps):
             values[dimension] = i / (steps - 1) * (end - start) + start
             if i > 0:
@@ -74,12 +74,11 @@ class WebGlToolBuilder:
             for v in values:
                 positions.append(v)
 
-        step = 0.05
-        displaceDepth = 0.1
+        displaceDepth = 0.2 * stepSize
         tickDisplace = [displaceDepth, displaceDepth, displaceDepth]
         tickDisplace[dimension] = 0
         counter = 0
-        for i in np.arange(step, end, step):
+        for i in np.arange(stepSize, end, stepSize):
             values[dimension] = i
             indices.append(2 * counter + lastIndex + 1)
             indices.append(2 * counter + lastIndex + 2)
@@ -88,21 +87,19 @@ class WebGlToolBuilder:
             for valueIndex in range(len(values)):
                 positions.append(values[valueIndex] - tickDisplace[valueIndex])
             counter += 1
-        print("Number of ticks", counter)
-
         return positions, indices
 
-    def addXYZAxes(self):
-        numElements = 100
-        positions, indices = self.createAxe(0, 0, self.max[0], numElements, 0)
+    def addXYZAxes(self, tickDistance):
+        print("Add axes with tick distance", tickDistance)
+        positions, indices = self.createAxe(0, 0, self.max[0], tickDistance, 0)
         self.data["sets"][0]["axes"] += positions
         self.data["sets"][0]["axesIndices"] += indices
 
-        positions, indices = self.createAxe(1, 0, self.max[1], numElements, indices[-1] + 1)
+        positions, indices = self.createAxe(1, 0, self.max[1], tickDistance, indices[-1] + 1)
         self.data["sets"][0]["axes"] += positions
         self.data["sets"][0]["axesIndices"] += indices
 
-        positions, indices = self.createAxe(2, 0, self.max[2], numElements, indices[-1] + 1)
+        positions, indices = self.createAxe(2, 0, self.max[2], tickDistance, indices[-1] + 1)
         self.data["sets"][0]["axes"] += positions
         self.data["sets"][0]["axesIndices"] += indices
 

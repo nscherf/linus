@@ -28,6 +28,7 @@ parser.add_argument("--resampleTo", help="Target track length (after resampling)
 parser.add_argument("--csvNoHeader", help="By default, the first line is assumed to be a header. If table is full of numeric values, use this option.", action='store_true', default=None)
 parser.add_argument("--csvSep", help="Add the CSV separator you are using (default: ,)", action='store_true', default=",")
 parser.add_argument("--addXYZAxes", help="Add x,y,z axes",  action='store_true', default=None)
+parser.add_argument("--tickDistance", help="Tick distance of axes, in dataspace (default: 1)",  action='store', default=1)
 parser.add_argument("--addCustomAxes", help="Add custom axes from a csv folder",  action='store_true', default=None)
 
 print("Prepare your trajectory data for a WebGL-based interactive visualization.")
@@ -56,6 +57,7 @@ skipSmallerThan = int(args.skipSmallerThan)
 resampleTo = int(args.resampleTo)
 csvSep = args.csvSep
 addXYZAxes = args.addXYZAxes
+tickDistance = args.tickDistance
 addCustomAxes = args.addCustomAxes
 
 
@@ -152,7 +154,7 @@ if loadFromCmd:
         wgb.addTrajectoryDatasetState(tracks, "state2", attributes)
 
     if addXYZAxes is not None:
-         wgb.addXYZAxes()
+        wgb.addXYZAxes(float(tickDistance) * float(scale))
 
     # Output results
     wgb.setDecimalDigits(5)
