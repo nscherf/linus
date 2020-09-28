@@ -91,17 +91,20 @@ class WebGlToolBuilder:
 
     def addXYZAxes(self, tickDistance):
         print("Add axes with tick distance", tickDistance)
-        positions, indices = self.createAxe(0, 0, self.max[0], tickDistance, 0)
-        self.data["sets"][0]["axes"] += positions
-        self.data["sets"][0]["axesIndices"] += indices
+        if self.max[0] > 0.0000001:
+            positions, indices = self.createAxe(0, 0, self.max[0], tickDistance, 0)
+            self.data["sets"][0]["axes"] += positions
+            self.data["sets"][0]["axesIndices"] += indices
 
-        positions, indices = self.createAxe(1, 0, self.max[1], tickDistance, indices[-1] + 1)
-        self.data["sets"][0]["axes"] += positions
-        self.data["sets"][0]["axesIndices"] += indices
+        if self.max[1] > 0.0000001:
+            positions, indices = self.createAxe(1, 0, self.max[1], tickDistance, indices[-1] + 1)
+            self.data["sets"][0]["axes"] += positions
+            self.data["sets"][0]["axesIndices"] += indices
 
-        positions, indices = self.createAxe(2, 0, self.max[2], tickDistance, indices[-1] + 1)
-        self.data["sets"][0]["axes"] += positions
-        self.data["sets"][0]["axesIndices"] += indices
+        if self.max[2] > 0.0000001:
+            positions, indices = self.createAxe(2, 0, self.max[2], tickDistance, indices[-1] + 1)
+            self.data["sets"][0]["axes"] += positions
+            self.data["sets"][0]["axesIndices"] += indices
 
 
     def addTriangleDataset(self, positions, indices, normals, datasetName, scale):
