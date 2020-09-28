@@ -923,9 +923,12 @@ export default class Linus {
     // it might be necessary to subdivide the objects automatically (...)
     addDataHelperLines(i, k, dim, numStates) {
         let elementSize = dim; // for lines, and triangles, since "dim" (e.g. 3) values(x,y,z) must stay together
-        let numElements =
-            this.data.sets[i].states[0].positions[k].length / elementSize;
-        let numElementsWithAxes = numElements + this.data.sets[i].axes.length / elementSize;
+        let numElements = this.data.sets[i].states[0].positions[k].length / elementSize;
+        let axesElements = 0;
+        if(this.data.sets[i].axes !== undefined) {
+            axesElements = this.data.sets[i].axes.length / elementSize;
+        }
+        let numElementsWithAxes = numElements + axesElements;
         console.log("Axes", numElements, numElementsWithAxes)
         let geometry = new BufferGeometry();
 
@@ -939,15 +942,17 @@ export default class Linus {
         
 
         let positions = JSON.parse(JSON.stringify(this.data.sets[i].states[0].positions[k]));
-        for (let axeItem = 0; axeItem < this.data.sets[i].axes.length / elementSize; axeItem++) {
-            drawIndexValues.push(-1)
-            axeType.push(1)
-            for (let d = 0; d < dim; d++) {
-                positions.push(this.data.sets[i].axes[dim * axeItem + d])
+        if(this.data.sets[i].axes !== undefined) {
+            for (let axeItem = 0; axeItem < this.data.sets[i].axes.length / elementSize; axeItem++) {
+                drawIndexValues.push(-1)
+                axeType.push(1)
+                for (let d = 0; d < dim; d++) {
+                    positions.push(this.data.sets[i].axes[dim * axeItem + d])
+                }
             }
-        }
-        for (let axeItem = 0; axeItem < this.data.sets[i].axesIndices.length; axeItem++) {
-            primitiveIndices.push(this.data.sets[i].axesIndices[axeItem] + numElements)
+            for (let axeItem = 0; axeItem < this.data.sets[i].axesIndices.length; axeItem++) {
+                primitiveIndices.push(this.data.sets[i].axesIndices[axeItem] + numElements)
+            }
         }
 
         geometry.setAttribute("setId", new Float32BufferAttribute(setIds, 1));
@@ -980,8 +985,11 @@ export default class Linus {
             j++ // States, starting from 1!!!
         ) {
             let positions = JSON.parse(JSON.stringify(this.data.sets[i].states[j].positions[k]));
-            for (let axePos = 0; axePos < this.data.sets[i].axes.length; axePos++) {
-                positions.push(this.data.sets[i].axes[axePos])
+
+            if(this.data.sets[i].axes !== undefined) {
+                for (let axePos = 0; axePos < this.data.sets[i].axes.length; axePos++) {
+                    positions.push(this.data.sets[i].axes[axePos])
+                }
             }
 
             let last = [];
@@ -1020,9 +1028,11 @@ export default class Linus {
                     k
                 ])); 
 
-                for (let axePos = 0; axePos < this.data.sets[i].axes.length / elementSize; axePos++) {
-                    for(let fillDim = 0; fillDim < aDim; fillDim++) {
-                        values.push(0)
+                if(this.data.sets[i].axes !== undefined) {
+                    for (let axePos = 0; axePos < this.data.sets[i].axes.length / elementSize; axePos++) {
+                        for(let fillDim = 0; fillDim < aDim; fillDim++) {
+                            values.push(0)
+                        }
                     }
                 }
 
@@ -2249,7 +2259,7 @@ export default class Linus {
             p.colorMapTextures = this.colorMapTextures;
 
             
-            if(this.data.sets[setId].axes.length > 0) {
+            if(this.data.sets[setId].axes !== undefined && this.data.sets[setId].axes.length > 0) {
                 // We also have axes to draw
                 this.gui.addHeadline(
                     "Axes styling"
