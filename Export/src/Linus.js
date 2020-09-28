@@ -927,9 +927,9 @@ export default class Linus {
         let axesElements = 0;
         if(this.data.sets[i].axes !== undefined) {
             axesElements = this.data.sets[i].axes.length / elementSize;
+            // console.log(JSON.string(this.data.sets[i]))
         }
         let numElementsWithAxes = numElements + axesElements;
-        console.log("Axes", numElements, numElementsWithAxes)
         let geometry = new BufferGeometry();
 
         geometry.type = this.data.sets[i].type;
@@ -955,7 +955,10 @@ export default class Linus {
             }
         }
 
-        geometry.setAttribute("setId", new Float32BufferAttribute(setIds, 1));
+        geometry.setAttribute(
+            "setId", 
+            new Float32BufferAttribute(setIds, 1));
+
         geometry.setAttribute(
             "drawIndex",
             new Float32BufferAttribute(drawIndexValues, 1)
@@ -969,46 +972,72 @@ export default class Linus {
         // Make it twice (once here, once as attribute), otherwise three js problems
         geometry.setAttribute(
             "position",
-            new Float32BufferAttribute(
-                positions,
-                dim
-            )
+            new Float32BufferAttribute(positions, dim)
         );
 
 
         geometry.setIndex(primitiveIndices);
-        this.numGlPrimitives += this.data.sets[i].indices[k].length / 2;
+        this.numGlPrimitives += primitiveIndices / 2;
+/*
+        console.log("--- Positions " )
+        console.log(positions.length / dim)
+        console.log(positions.join(", "))
 
+        
+        console.log("--- setIds " )
+        console.log(setIds.length)
+        console.log(setIds.join(", "))
+
+        console.log("--- axeType " )
+        console.log(axeType.length)
+        console.log(axeType.join(", "))
+
+        console.log("--- drawIndexValues " )
+        console.log(drawIndexValues.length)
+        console.log(drawIndexValues.join(", "))
+
+        console.log("--- primitiveIndices ")
+        console.log(primitiveIndices.length)
+        console.log(primitiveIndices.join(", "))*/
         for (
             let j = 0;
             j < numStates;
-            j++ // States, starting from 1!!!
+            j++ 
         ) {
-            let positions = JSON.parse(JSON.stringify(this.data.sets[i].states[j].positions[k]));
+            let positionsState = JSON.parse(JSON.stringify(this.data.sets[i].states[j].positions[k]));
 
             if(this.data.sets[i].axes !== undefined) {
                 for (let axePos = 0; axePos < this.data.sets[i].axes.length; axePos++) {
-                    positions.push(this.data.sets[i].axes[axePos])
+                    positionsState.push(this.data.sets[i].axes[axePos])
                 }
             }
 
             let last = [];
-            for (let l = positions.length - dim; l < positions.length; l++) {
-                last.push(positions[l] + (positions[l] - positions[l - dim])); // It's a fake, one step further
+            for (let l = positionsState.length - dim; l < positionsState.length; l++) {
+                last.push(positionsState[l] + (positionsState[l] - positionsState[l - dim])); // It's a fake, one step further
             }
 
             geometry.setAttribute(
                 "position" + j,
-                new Float32BufferAttribute(positions, dim)
+                new Float32BufferAttribute(positionsState, dim)
             );
+
             geometry.setAttribute(
                 "nextPosition" + j,
                 new Float32BufferAttribute(
-                    positions.slice(dim).concat(last),
+                    positionsState.slice(dim).concat(last),
                     dim
-                )
-            );
-
+                    )
+                    );
+            /*
+            console.log("----- positionsState " + j)
+            console.log(positionsState.length / dim)
+            console.log(positionsState.join(", "))
+            
+            console.log("----- nextPosition " + j)
+            console.log(positionsState.slice(dim).concat(last).length / dim)
+            console.log(positionsState.slice(dim).concat(last).join(", "))
+            */
             for (
                 let a = 0;
                 a < this.data.sets[i].states[j].attributes.length;
@@ -1043,7 +1072,10 @@ export default class Linus {
                     this.cleanVarName(attName),
                     new Float32BufferAttribute(values, aDim)
                 );
-
+                /*
+                console.log("----- att " + this.cleanVarName(attName))
+                console.log(values / dim)
+                */
                 let id = this.getDataAttributeIndex(
                     i,
                     this.data.sets[i].states[j].attributes[a].name
@@ -1059,7 +1091,13 @@ export default class Linus {
                         values[vv]
                     );
                 }
+                /*
+                console.log("--- Attribute " + a)
+                console.log(values.length)
+                // console.log(values.join(", "))
+                */
             }
+
         }
 
         // Create a unique id with setId_lineId
@@ -1069,8 +1107,6 @@ export default class Linus {
                 i.toString() + "_" + this.data.sets[i].entities[k][l].toString()
             );
         }
-
-        console.log("Add state ", geometry);
 
         return geometry;
     }
@@ -1230,10 +1266,6 @@ export default class Linus {
             k < this.data.sets[i].states[0].positions.length;
             k++ // Objects
         ) {
-            if (k % this.lod != 0) {
-                console.log("Skip");
-                continue;
-            }
             this.setStatus(
                 0,
                 this.data.sets[i].states.length *
@@ -1248,11 +1280,6 @@ export default class Linus {
                 //Lines
                 geometry = this.addDataHelperLines(i, k, dim, numStates);
             }
-
-            if (this.data.sets[i].axes !== undefined) {
-                this.addAxes(i);
-            }
-
             objects.push(geometry);
         }
 
@@ -1278,10 +1305,6 @@ export default class Linus {
         );
 
         return objects;
-    }
-
-    addAxes(setId) {
-        console.log("Add axes for", setId)
     }
 
     // Checks the data's extra attributes (except for position/orientation) and creates variables for the shader
@@ -1556,7 +1579,6 @@ export default class Linus {
         this.renderer.sortObjects = false;
         this.renderer.depthWrite = false;
         document.body.appendChild(this.renderer.domElement);
-
         this.initColormaps();
         this.scene = new Scene();
 
@@ -1770,15 +1792,9 @@ export default class Linus {
 
     // Animation loop. Gets new frame, moves annotations
     animateFrame() {
-        if (!this.webVr) {
-            requestAnimationFrame(this.animateFrame.bind(this)); // without WEBVR: add this line
-            this.controls.update();
-        }
-
         this.stats.update();
         this.sortSegments();
         this.cameraUpdateCallback(); // Camera changes are in here and called now to avoid synchronization problems
-
         this.renderer.setClearColor(this.backgroundColor, 1);
         this.renderer.setViewport(0, 0, window.innerWidth, window.innerHeight);
         this.camera.updateProjectionMatrix();
@@ -1790,6 +1806,11 @@ export default class Linus {
         this.camera2.position.setLength(2);
         this.camera2.lookAt(this.scene2.position); // Copy perspective from main camera
         this.renderer2.render(this.scene2, this.camera2);
+
+        if (!this.webVr) {
+            requestAnimationFrame(this.animateFrame.bind(this)); // without WEBVR: add this line
+            this.controls.update();
+        }
     }
 
     mergeSort(array, comparefn) {
@@ -1937,8 +1958,6 @@ export default class Linus {
                 let sorted = new Int32Array(distances.length);
                 for (let l = 0; l < distances.length; ++l) sorted[l] = l;
 
-                console.log("Sort");
-
                 if (this.sortFrequency == 4) {
                     // Case "4", no sorting. If we made it to here, we want to shuffle
                     sorted = this.shuffle(sorted);
@@ -1969,6 +1988,7 @@ export default class Linus {
                         //this.mergeSort(sorted, function (a, b) {return distances[a] < distances[b] ? -1 : 1; })
                     }
                 }
+                console.log("Sorted", sorted.length)
 
                 // Finally copy the sorted indices and tell THREE.js to update the geometry
                 for (let l = 0; l < sorted.length; l++) {
@@ -2957,6 +2977,11 @@ export default class Linus {
             let newValues = JSON.parse(
                 JSON.stringify(this.data.sets[i].entities[k])
             );
+            if(this.data.sets[i].axes !== undefined) {
+                for(let axeItem = 0; axeItem < this.data.sets[i].axes.length / 3; axeItem++) {
+                    newValues.push(-1);
+                }
+            }
 
             //this.scene.children[0].children[i].geometry.attributes.drawIndex.setArray(new Float32Array(newValues));
             this.scene.children[0].children[i].geometry.setAttribute(
@@ -2988,6 +3013,7 @@ export default class Linus {
                 this.scene.children[0].children[i].geometry.attributes.drawIndex
                     .array.length
             );
+
             this.scene.children[0].children[i].geometry.setAttribute(
                 "drawIndex",
                 new Float32BufferAttribute(newValues, 1)
@@ -3098,7 +3124,7 @@ export default class Linus {
             let newValues = this.createFilledArray(
                 -1,
                 this.scene.children[0].children[i].geometry.attributes.drawIndex
-                    .array.length
+                    .array.length - 1
             );
 
             for (
@@ -3111,13 +3137,21 @@ export default class Linus {
                 let lineId = this.scene.children[0].children[i].geometry
                     .totalLineId[j];
                 if (selectionMap[lineId] !== undefined) {
-                    newValues[j] = this.data.sets[i].entities[k][j]; //this.scene.children[0].children[i].visible = true;;
+                    newValues[j] = this.data.sets[i].entities[k][j]; //this.scene.children[0].children[i].visible = true;
                 }
             }
+            
+            /*
+            if(this.data.sets[i].axes !== undefined) {
+                        for(let axeIndex = 0; axeIndex < this.data.sets[i].axes.length / 3; axeIndex++) {
+                            newValues[j]
+                        }
+                    }
+  */
             this.scene.children[0].children[i].geometry.setAttribute(
                 "drawIndex",
                 new Float32BufferAttribute(newValues, 1)
-            );
+                );
             this.scene.children[0].children[
                 i
             ].geometry.attributes.drawIndex.needsUpdate = true;
