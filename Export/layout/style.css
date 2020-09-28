@@ -42,6 +42,7 @@ a {
     /* hide border */
     top: -1px;
     width: 600px;
+    max-width: 90%;
     min-height: 100px;
     background-color: rgba(0, 0, 0, 0.3);
     overflow-y: auto;
@@ -312,6 +313,7 @@ button:active {
     overflow-y: auto;
     overflow-x: hidden;
     max-height: 100%;
+    max-width: 80%;
     padding: 10px;
     -webkit-backdrop-filter: blur(25px);
     backdrop-filter: blur(25px);
@@ -483,6 +485,7 @@ input[type=color] {
     font-size: 15px;
     position: relative;
     width: 400px;
+    max-width: 80%;
     color: #555555;
     background-color: white;
     border-radius: 0;
@@ -520,6 +523,7 @@ input[type=color] {
 #loadingBoxInner {
     position: relative;
     width: 400px;
+    max-width: 80%;
     height: 100px;
     background-color: white;
     border-radius: 0;
