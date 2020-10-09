@@ -2974,29 +2974,26 @@ export default class Linus {
         this.currentSelection = {};
         for (let i = 0; i < this.scene.children[0].children.length; i++) {
             let k = this.scene.children[0].children[i].geometry.originIndex;
+            let newValuesAxes = [];
+            if(this.data.sets[i].axes !== undefined) {
+                for(let axeItem = 0; axeItem < this.data.sets[i].axes.length / 3; axeItem++) {
+                    newValuesAxes.push(-1);
+                }
+            }
             let newValues = JSON.parse(
                 JSON.stringify(this.data.sets[i].entities[k])
             );
-            if(this.data.sets[i].axes !== undefined) {
-                for(let axeItem = 0; axeItem < this.data.sets[i].axes.length / 3; axeItem++) {
-                    newValues.push(-1);
-                }
-            }
-
+            newValues = newValues.concat(newValuesAxes)
+            console.log("Draw index values", newValues)
+            
             //this.scene.children[0].children[i].geometry.attributes.drawIndex.setArray(new Float32Array(newValues));
+            
             this.scene.children[0].children[i].geometry.setAttribute(
                 "drawIndex",
                 new Float32BufferAttribute(newValues, 1)
-            );
-            this.scene.children[0].children[
-                i
-            ].geometry.attributes.drawIndex.needsUpdate = true;
-            for (
-                let j = 0;
-                j <
-                this.scene.children[0].children[i].geometry.totalLineId.length;
-                j++
-            ) {
+                );
+            this.scene.children[0].children[i].geometry.attributes.drawIndex.needsUpdate = true;
+            for (let j = 0; j < this.scene.children[0].children[i].geometry.totalLineId.length; j++) {
                 this.currentSelection[
                     this.scene.children[0].children[i].geometry.totalLineId[j]
                 ] = 1;
