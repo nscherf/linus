@@ -289,6 +289,9 @@ void main()
 {
     if(vAxeType > 0.5) {
         gl_FragColor = vec4(axesColor, axesTransparancy);
+        if(vDiscardThis > 0.001) {
+            discard;
+        }
         return;
     }
 
