@@ -29,7 +29,7 @@ parser.add_argument("--csvNoHeader", help="By default, the first line is assumed
 parser.add_argument("--csvSep", help="Add the CSV separator you are using (default: ,)", action='store_true', default=",")
 parser.add_argument("--addXYZAxes", help="Add x,y,z axes",  action='store_true', default=None)
 parser.add_argument("--tickDistance", help="Tick distance of axes, in dataspace (default: 1)",  action='store', default=1)
-parser.add_argument("--addCustomAxes", help="Add custom axes from a csv folder",  action='store_true', default=None)
+parser.add_argument("--addCustomAxes", help="Add custom axes from a csv folder", default=None, nargs="?")
 
 print("Prepare your trajectory data for a WebGL-based interactive visualization.")
 print("Please provide at least one data source. Find the result in ./Export/")
@@ -155,6 +155,10 @@ if loadFromCmd:
 
     if addXYZAxes is not None:
         wgb.addXYZAxes(float(tickDistance) * float(scale))
+
+    if addCustomAxes is not None:
+        print("Add custom axes")
+        wgb.addCustomAxes(addCustomAxes, csvSep, csvNoHeader)
 
     # Output results
     wgb.setDecimalDigits(5)

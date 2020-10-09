@@ -4,6 +4,7 @@ import re
 import zlib
 import base64
 import math
+import os 
 
 class WebGlToolBuilder:
     """ Tool to combine data in order to create a JSON file for the WebGL tool """
@@ -106,6 +107,41 @@ class WebGlToolBuilder:
             self.data["sets"][0]["axes"] += positions
             self.data["sets"][0]["axesIndices"] += indices
 
+    def addCustomAxes(self, axesFolder, csvSeparator = ",", skipHeader = False):
+        counter = 0
+        lastIndex = 0
+        for filename in sorted(os.listdir(axesFolder)):
+            if filename.endswith(".csv"):
+                positions, indices = self.loadAxesFile(axesFolder + "/" + filename, lastIndex, csvSeparator, skipHeader)
+                if len(indices) < 4:
+                    continue
+                self.data["sets"][0]["axes"] += positions
+                self.data["sets"][0]["axesIndices"] += indices
+                lastIndex = indices[-1] + 1
+                counter += 1
+
+    def loadAxesFile(self, axesFilePath, lastIndex, csvSeparator, skipHeader):
+        axesFile = open(axesFilePath, 'r') 
+        lines = axesFile.readlines() 
+        counter = 0
+        positions = []
+        indices = []
+        for line in lines: 
+            if counter == 0 and skipHeader:
+                counter += 1
+                continue
+            splitted = line.split(csvSeparator)
+            x = splitted[0]
+            y = splitted[1]
+            z = splitted[2]
+            positions.append(float(x))
+            positions.append(float(y))
+            positions.append(float(z))
+            if counter > 0:
+                indices.append(counter - 1 + lastIndex)
+                indices.append(counter + lastIndex)
+            counter += 1
+        return positions, indices
 
     def addTriangleDataset(self, positions, indices, normals, datasetName, scale):
         """ Create the JSON structure that is needed for the WebGL-Tool """
